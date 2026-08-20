@@ -4,6 +4,10 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico") ||
@@ -12,6 +16,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+<<<<<<< HEAD
   const publicApiRoutes = [
     "/api/auth/login",
     "/api/auth/register",
@@ -19,10 +24,15 @@ export function middleware(request: NextRequest) {
     "/api/registro/mobile", // NUEVO: alta de cuentas personales desde la app móvil
     "/api/public-key",      // el login web lo pide antes de autenticarse; ya era necesario
   ];
+=======
+
+  const publicApiRoutes = ["/api/auth/login", "/api/auth/register", "/api/login"];
+>>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
   if (publicApiRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
+<<<<<<< HEAD
   const usuarioCookie = request.cookies.get("usuario")?.value;
 
   /*
@@ -39,12 +49,24 @@ export function middleware(request: NextRequest) {
   const tieneBearer = !!authHeader?.toLowerCase().startsWith("bearer ");
 
   if (!usuarioCookie && !tieneBearer) {
+=======
+
+  const usuarioCookie = request.cookies.get("usuario")?.value;
+
+
+  if (!usuarioCookie) {
+
+>>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
     if (pathname.startsWith("/api")) {
       return NextResponse.json(
         { error: "No autorizado. Sesión requerida." },
         { status: 401 }
       );
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -59,6 +81,7 @@ export function middleware(request: NextRequest) {
     const user = JSON.parse(usuarioCookie!);
     const tipo = Number(user.tipo_usuario);
 
+
     if (pathname.startsWith("/administrador") && tipo !== 1) {
       return NextResponse.redirect(new URL("/usuarios", request.url));
     }
@@ -67,6 +90,10 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/administrador", request.url));
     }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
     if (pathname.startsWith("/api/admin") && tipo !== 1) {
       return NextResponse.json(
         { error: "Acceso denegado: permisos insuficientes." },
@@ -86,10 +113,16 @@ export function middleware(request: NextRequest) {
   }
 }
 
+
 export const config = {
   matcher: [
     "/administrador/:path*",
     "/usuarios/:path*",
+<<<<<<< HEAD
     "/api/:path*",
   ],
+=======
+    "/api/:path*" 
+  ]
+>>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
 };
