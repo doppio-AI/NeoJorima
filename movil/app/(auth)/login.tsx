@@ -62,7 +62,13 @@ export default function LoginScreen() {
         ["session_token", data.token],
       ]);
 
-      router.replace("/(tabs)/home");
+      // NUEVO: si el usuario nunca terminó el wizard (por ejemplo, cerró
+      // la app a la mitad), lo regresamos ahí en vez de mandarlo a home.
+      if (data.usuario?.onboarding_completo === false) {
+        router.replace("/(onboarding)/avatar");
+      } else {
+        router.replace("/(tabs)/home");
+      }
     } catch (err) {
       setError("No se pudo conectar con el servidor");
     } finally {
@@ -104,34 +110,27 @@ export default function LoginScreen() {
           <View style={styles.buttonGap} />
 
           <ThemedButton
-            title={loading ? "Iniciando..." : "Iniciar sesión"}
-            variant="secondary"
+            title={loading ? "Ingresando..." : "Iniciar sesión"}
             onPress={handleLogin}
-            disabled={loading}
+            loading={loading}
           />
 
-          {error ? (
-            <View style={styles.errorBox}>
-              <ThemedText variant="bodySmall" color={COLORS.error}>
+          {!!error && (
+            <>
+              <View style={styles.buttonGap} />
+              <ThemedText color={COLORS.error} variant="bodySmall">
                 {error}
               </ThemedText>
-            </View>
-          ) : null}
+            </>
+          )}
 
-          <View style={styles.linkContainer}>
-            <TouchableOpacity
-              onPress={() =>
-                Alert.alert(
-                  "Recuperación de acceso",
-                  "Esta opción la conectamos después."
-                )
-              }
-            >
-              <ThemedText variant="bodySmall" color={COLORS.primary}>
-                ¿Olvidaste tu contraseña?
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
+          <View style={styles.buttonGap} />
+
+          <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
+            <ThemedText color={COLORS.primary} style={{ textAlign: "center" }}>
+              ¿No tienes cuenta? Regístrate
+            </ThemedText>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -139,40 +138,10 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: SIZES.padding,
-  },
-
-  header: {
-    marginBottom: 40,
-  },
-
-  form: {
-    width: "100%",
-  },
-
-  inputGap: {
-    height: 16,
-  },
-
-  buttonGap: {
-    height: 24,
-  },
-
-  errorBox: {
-    marginTop: 12,
-    alignItems: "center",
-  },
-
-  linkContainer: {
-    marginTop: 16,
-    alignItems: "center",
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  content: { flex: 1, padding: SIZES.padding, justifyContent: "center" },
+  header: { alignItems: "center", marginBottom: 40, gap: 6 },
+  form: { width: "100%" },
+  inputGap: { height: 16 },
+  buttonGap: { height: 16 },
 });
