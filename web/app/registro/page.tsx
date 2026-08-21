@@ -93,8 +93,9 @@ export default function Registro() {
       }
 
       // /api/auth/register ya dejó la sesión iniciada (mismas cookies
-      // que /api/login), así que entramos directo, sin pasar por login.
-      router.replace("/usuarios");
+      // que /api/login). Como es cuenta nueva, siempre le falta el
+      // wizard de onboarding.
+      router.replace("/onboarding");
       router.refresh();
     } catch (error) {
       alert("Error al conectar con el servidor");

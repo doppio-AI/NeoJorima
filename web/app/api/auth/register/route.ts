@@ -74,11 +74,7 @@ export async function POST(request: Request) {
         contrasena: passwordHash,
         edificio_id: null,
         tipo_cuenta: "personal",
-        // NOTA: en web todavía no hay wizard de onboarding (sí existe en
-        // móvil). Lo dejamos en true para no dejar a nadie atorado sin
-        // pantalla a donde ir; su perfil_bienestar queda vacío hasta que
-        // lo llenen manualmente o se construya un wizard web.
-        onboarding_completo: true,
+        onboarding_completo: false,
       },
     });
 
@@ -92,6 +88,9 @@ export async function POST(request: Request) {
       apellido_materno: nuevoUsuario.apellido_materno,
       edificio_id: nuevoUsuario.edificio_id,
       turno: nuevoUsuario.turno,
+      tipo_cuenta: nuevoUsuario.tipo_cuenta,
+      avatar_genero: nuevoUsuario.avatar_genero,
+      onboarding_completo: nuevoUsuario.onboarding_completo,
     };
 
     const response = NextResponse.json(

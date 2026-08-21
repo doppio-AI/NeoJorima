@@ -5,7 +5,7 @@ import { FiLogOut, FiMenu, FiX, FiChevronsLeft, FiChevronsRight } from "react-ic
 import { useRouter } from "next/navigation";
 import { useSidebar } from "@/app/components/sidebar-context";
 
-type AdminSection = "usuarios" | "metricas" | "ayuda" | "alertas";
+type AdminSection = "usuarios" | "metricas" | "ayuda" | "alertas" | "ambiente";
 
 interface AdminSidebarProps {
   active: AdminSection;
@@ -105,23 +105,6 @@ export default function AdminSidebarSimple({ active, onLogout }: AdminSidebarPro
           </nav>
         </div>
 
-<<<<<<< HEAD
-        <nav className="admin-sidebar-nav">
-          <Link className={getLinkClass("usuarios")} href="/administrador">
-            Usuarios
-          </Link>
-          <Link className={getLinkClass("alertas")} href="/administrador/alertas">
-            Alertas
-          </Link>
-          <Link className={getLinkClass("metricas")} href="/administrador/metricas">
-            Métricas
-          </Link>
-          <Link className={getLinkClass("ayuda")} href="/administrador/ayuda">
-            Ayuda y guías
-          </Link>
-        </nav>
-      </div>
-=======
         <div>
           <button
             className="admin-logout-button"
@@ -130,7 +113,6 @@ export default function AdminSidebarSimple({ active, onLogout }: AdminSidebarPro
             <FiLogOut size={20} />
             <span className="sidebar-link-label">Cerrar Sesión</span>
           </button>
->>>>>>> 92f8d259e32feaad8ca6eb45ebd3d55ffc66b124
 
           <button
             type="button"

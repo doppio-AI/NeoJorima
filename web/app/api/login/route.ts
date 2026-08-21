@@ -158,7 +158,7 @@ export async function POST(request: Request) {
 
     /* ── 4. Crear la sesión directamente, sin 2FA ── */
 
-    const usuarioSesion = {
+   const usuarioSesion = {
       id: user.usuario_id,
       usuario_id: user.usuario_id,
       tipo_usuario: user.tipo_usuario,
@@ -168,7 +168,12 @@ export async function POST(request: Request) {
       apellido_materno: user.apellido_materno,
       edificio_id: user.edificio_id,
       turno: user.turno,
+      tipo_cuenta: user.tipo_cuenta,
+      avatar_genero: user.avatar_genero,
+      onboarding_completo: user.onboarding_completo,
     };
+ 
+    
 
     const usuarioPublico = {
       id: user.usuario_id,
@@ -180,6 +185,9 @@ export async function POST(request: Request) {
       apellido_materno: user.apellido_materno,
       edificio_id: user.edificio_id,
       turno: user.turno,
+      tipo_cuenta: user.tipo_cuenta,
+      avatar_genero: user.avatar_genero,
+      onboarding_completo: user.onboarding_completo,
     };
 
     const response = NextResponse.json(

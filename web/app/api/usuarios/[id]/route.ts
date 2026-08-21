@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { getSessionUser } from "@/lib/auth/session";
-import { obtenerAlcance } from "@/lib/auth/institucion";
+import { obtenerAlcance, type Alcance } from "@/lib/auth/institucion";
 
 function getIdFromRequest(request: NextRequest): number | null {
   const id = request.nextUrl.pathname.split("/").pop();
@@ -10,19 +10,32 @@ function getIdFromRequest(request: NextRequest): number | null {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-/* Verifica que quien hace la request tenga permiso sobre el usuario
-   objetivo (target), y devuelve el alcance ya resuelto o una
-   respuesta de error lista para regresar. */
+/*
+ * Verifica que quien hace la request tenga permiso sobre el usuario
+ * objetivo (target).
+ *
+ * NUEVO: cualquier usuario puede ver/editar SU PROPIO registro (así
+ * funciona la pantalla de "Mi Perfil" y la carga inicial de /usuarios),
+ * sin necesitar ser admin. Esto se puede desactivar con
+ * permitirSelf: false para acciones que no deberían auto-aplicarse,
+ * como borrar la propia cuenta desde este endpoint.
+ */
 async function autorizarSobreObjetivo(
   request: NextRequest,
-  targetId: number
+  targetId: number,
+  opciones: { permitirSelf?: boolean } = {}
 ): Promise<
-  | { ok: true; alcance: Awaited<ReturnType<typeof obtenerAlcance>> }
+  | { ok: true; alcance: Alcance }
   | { ok: false; response: NextResponse }
 > {
   const sesion = getSessionUser(request);
   if (!sesion) {
     return { ok: false, response: NextResponse.json({ error: "No autenticado" }, { status: 401 }) };
+  }
+
+  const permitirSelf = opciones.permitirSelf ?? true;
+  if (permitirSelf && sesion.usuario_id === targetId) {
+    return { ok: true, alcance: { rol: "usuario" } };
   }
 
   const alcance = await obtenerAlcance(sesion.usuario_id, sesion.tipo_usuario);
@@ -39,8 +52,7 @@ async function autorizarSobreObjetivo(
   }
 
   // admin_institucion: el objetivo debe pertenecer a su mismo edificio,
-  // y no puede ser un admin (1) ni un superadmin (3) — un admin de
-  // institución no gestiona a otros admins, solo a sus colaboradores.
+  // y no puede ser un admin (1) ni un superadmin (3).
   const target = await prisma.usuario.findUnique({
     where: { usuario_id: targetId },
     select: { edificio_id: true, tipo_usuario: true },
@@ -96,10 +108,10 @@ export async function GET(request: NextRequest) {
 /* ───────────────────────────────────────────
    PUT /api/usuarios/[id]
 
-   Whitelist explícita de campos — ya NO se hace {...body} directo,
-   eso permitía que cualquiera con sesión mandara tipo_usuario:1 y
-   se auto-promoviera. Un admin_institucion además nunca puede tocar
-   tipo_usuario ni edificio_id de nadie (eso solo lo hace un superadmin).
+   Whitelist explícita de campos. Un usuario editando su propio
+   registro, o un admin_institucion editando a un colaborador suyo,
+   NUNCA pueden tocar tipo_usuario ni edificio_id — eso solo lo puede
+   hacer un superadmin.
    ─────────────────────────────────────────── */
 export async function PUT(request: NextRequest) {
   try {
@@ -152,6 +164,10 @@ export async function PUT(request: NextRequest) {
 
 /* ───────────────────────────────────────────
    DELETE /api/usuarios/[id]
+
+   permitirSelf: false a propósito — nadie borra su propia cuenta
+   desde este endpoint por accidente. Solo admin/superadmin borran
+   (con el mismo scoping de siempre).
    ─────────────────────────────────────────── */
 export async function DELETE(request: NextRequest) {
   try {
@@ -160,7 +176,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Debe enviar un id válido" }, { status: 400 });
     }
 
-    const auth = await autorizarSobreObjetivo(request, id);
+    const auth = await autorizarSobreObjetivo(request, id, { permitirSelf: false });
     if (!auth.ok) return auth.response;
 
     await prisma.usuario.delete({ where: { usuario_id: id } });

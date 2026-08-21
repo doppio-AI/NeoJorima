@@ -19,6 +19,7 @@ type LoginResponse = {
     apellido_materno?: string | null;
     edificio_id?: number | null;
     turno?: string | null;
+    onboarding_completo?: boolean;
   };
 };
 
@@ -171,16 +172,20 @@ export default function Login() {
        * /api/login ya establece usuario y usuario_public.
        */
 
-      const tipoUsuario = Number(data.usuario.tipo_usuario);
-
+         const tipoUsuario = Number(data.usuario.tipo_usuario);
+ 
       /* ── 6. Redirigir según el rol ── */
-
+ 
       if (tipoUsuario === 1) {
         router.replace("/administrador");
+      } else if (tipoUsuario === 3) {
+        router.replace("/superadmin");
+      } else if (data.usuario.onboarding_completo === false) {
+        router.replace("/onboarding");
       } else {
         router.replace("/usuarios");
       }
-
+ 
       router.refresh();
     } catch (error) {
       console.error("Error iniciando sesión:", error);
