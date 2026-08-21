@@ -13,6 +13,10 @@ interface Usuario {
   tipo_usuario: number;
   edificio_id?: number | null;
   turno?: string;
+  avatar_genero?: "femenino" | "masculino";
+  genero?: string | null;
+  telefono?: string | null;
+  fecha_nacimiento?: string | null;
 }
 
 type UsuarioApi = {
@@ -24,6 +28,10 @@ type UsuarioApi = {
   tipo_usuario: number;
   edificio_id: number | null;
   turno: string | null;
+  avatar_genero: "femenino" | "masculino" | null;
+  genero: string | null;
+  telefono: string | null;
+  fecha_nacimiento: string | null;
 };
 
 type Filtro = "todos" | "usuario" | "admin";
@@ -35,6 +43,10 @@ type FormData = {
   correo: string;
   contrasena: string;
   turno: string;
+  avatar_genero: "femenino" | "masculino";
+  genero: string;
+  telefono: string;
+  fecha_nacimiento: string;
 };
 
 const FORM_VACIO: FormData = {
@@ -44,6 +56,10 @@ const FORM_VACIO: FormData = {
   correo: "",
   contrasena: "",
   turno: "",
+  avatar_genero: "femenino",
+  genero: "",
+  telefono: "",
+  fecha_nacimiento: "",
 };
 
 export default function AdminUsuarios() {
@@ -76,6 +92,10 @@ export default function AdminUsuarios() {
           tipo_usuario: u.tipo_usuario,
           edificio_id: u.edificio_id,
           turno: u.turno ?? "",
+          avatar_genero: u.avatar_genero ?? "femenino",
+          genero: u.genero,
+          telefono: u.telefono,
+          fecha_nacimiento: u.fecha_nacimiento,
         }))
       );
     } catch (error) {
@@ -127,6 +147,10 @@ export default function AdminUsuarios() {
       apellido_materno: form.apellido_materno.trim() || undefined,
       correo: form.correo.trim(),
       turno: form.turno.trim() || undefined,
+      avatar_genero: form.avatar_genero,
+      genero: form.genero || undefined,
+      telefono: form.telefono.trim() || undefined,
+      fecha_nacimiento: form.fecha_nacimiento || undefined,
     };
 
     if (form.contrasena.trim()) {
@@ -196,6 +220,10 @@ export default function AdminUsuarios() {
       correo: user.correo,
       contrasena: "",
       turno: user.turno || "",
+      avatar_genero: user.avatar_genero || "femenino",
+      genero: user.genero || "",
+      telefono: user.telefono || "",
+      fecha_nacimiento: user.fecha_nacimiento ? user.fecha_nacimiento.slice(0, 10) : "",
     });
     setShowForm(true);
   };
@@ -373,6 +401,55 @@ export default function AdminUsuarios() {
                     value={form.turno}
                     onChange={(e) => setForm((p) => ({ ...p, turno: e.target.value }))}
                     placeholder="Matutino, Vespertino..."
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Asistente (avatar)</label>
+                  <select
+                    value={form.avatar_genero}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        avatar_genero: e.target.value as "femenino" | "masculino",
+                      }))
+                    }
+                  >
+                    <option value="femenino">Jorima</option>
+                    <option value="masculino">Jorimo</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Género (opcional)</label>
+                  <select
+                    value={form.genero}
+                    onChange={(e) => setForm((p) => ({ ...p, genero: e.target.value }))}
+                  >
+                    <option value="">Sin especificar</option>
+                    <option value="femenino">Femenino</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="otro">Otro</option>
+                    <option value="prefiero_no_decir">Prefiero no decir</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Teléfono (opcional)</label>
+                  <input
+                    type="tel"
+                    value={form.telefono}
+                    onChange={(e) => setForm((p) => ({ ...p, telefono: e.target.value }))}
+                    placeholder="10 dígitos"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Fecha de nacimiento (opcional)</label>
+                  <input
+                    type="date"
+                    value={form.fecha_nacimiento}
+                    onChange={(e) => setForm((p) => ({ ...p, fecha_nacimiento: e.target.value }))}
                   />
                 </div>
               </div>

@@ -133,6 +133,20 @@ export async function PUT(request: NextRequest) {
     if (typeof body.apellido_materno === "string")
       dataToUpdate.apellido_materno = body.apellido_materno.trim();
     if (typeof body.turno === "string") dataToUpdate.turno = body.turno;
+    if (body.avatar_genero === "femenino" || body.avatar_genero === "masculino") {
+      dataToUpdate.avatar_genero = body.avatar_genero;
+    }
+
+    const GENEROS_VALIDOS = ["femenino", "masculino", "otro", "prefiero_no_decir"];
+    if (GENEROS_VALIDOS.includes(body.genero)) {
+      dataToUpdate.genero = body.genero;
+    }
+    if (typeof body.telefono === "string") {
+      dataToUpdate.telefono = body.telefono.trim() || null;
+    }
+    if (typeof body.fecha_nacimiento === "string") {
+      dataToUpdate.fecha_nacimiento = body.fecha_nacimiento ? new Date(body.fecha_nacimiento) : null;
+    }
     if (typeof body.contrasena === "string" && body.contrasena.length >= 8) {
       dataToUpdate.contrasena = await bcrypt.hash(body.contrasena, 10);
     }

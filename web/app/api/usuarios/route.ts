@@ -125,6 +125,17 @@ export async function POST(request: NextRequest) {
 
     const correoNormalizado = String(body.correo).trim().toLowerCase();
 
+    const avatarGeneroRecibido = body.avatar_genero === "masculino" ? "masculino" : "femenino";
+
+    const GENEROS_VALIDOS = ["femenino", "masculino", "otro", "prefiero_no_decir"];
+    const generoRecibido = GENEROS_VALIDOS.includes(body.genero) ? body.genero : null;
+    const telefonoRecibido =
+      typeof body.telefono === "string" && body.telefono.trim() ? body.telefono.trim() : null;
+    const fechaNacimientoRecibida =
+      typeof body.fecha_nacimiento === "string" && body.fecha_nacimiento
+        ? new Date(body.fecha_nacimiento)
+        : null;
+
     const yaExiste = await prisma.usuario.findUnique({
       where: { correo: correoNormalizado },
       select: { usuario_id: true },
@@ -150,6 +161,10 @@ export async function POST(request: NextRequest) {
         edificio_id,
         turno: body.turno ? String(body.turno) : null,
         tipo_cuenta: "empresa",
+        avatar_genero: avatarGeneroRecibido,
+        genero: generoRecibido,
+        telefono: telefonoRecibido,
+        fecha_nacimiento: fechaNacimientoRecibida,
         // onboarding_completo queda en false a propósito: el admin fija
         // institución y rol, pero el usuario sigue necesitando llenar
         // su propio perfil de bienestar (horas, tareas, dependientes)

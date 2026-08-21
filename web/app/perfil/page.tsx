@@ -8,7 +8,6 @@ import {
   FiClock,
   FiBookOpen,
   FiLogOut,
-  FiSmile,
   FiUser,
   FiMail,
   FiSave,
@@ -16,7 +15,8 @@ import {
   FiClock as FiTurno,
   FiCalendar,
   FiMapPin,
-  FiShield, // <-- Ícono del escudo agregado
+  FiShield,
+  FiPhone,
 } from "react-icons/fi";
 
 type UsuarioCompleto = {
@@ -28,13 +28,22 @@ type UsuarioCompleto = {
   turno: string | null;
   tipo_usuario: number;
   fecha_registro: string | null;
+  genero: string | null;
+  telefono: string | null;
+  fecha_nacimiento: string | null;
   edificio: {
     nombre: string;
   } | null;
 };
 
-export default function PerfilPage() {
+const GENERO_TEXTO: Record<string, string> = {
+  femenino: "Femenino",
+  masculino: "Masculino",
+  otro: "Otro",
+  prefiero_no_decir: "Prefiero no decir",
+};
 
+export default function PerfilPage() {
   const router = useRouter();
   const [usuario, setUsuario] = useState<UsuarioCompleto | null>(null);
   const [formData, setFormData] = useState({
@@ -42,6 +51,9 @@ export default function PerfilPage() {
     apellido_paterno: "",
     apellido_materno: "",
     turno: "",
+    genero: "",
+    telefono: "",
+    fecha_nacimiento: "",
     contrasena: "",
     confirmarContrasena: "",
   });
@@ -78,6 +90,7 @@ export default function PerfilPage() {
 
         const res = await fetch(`/api/usuarios/${usuarioPublic.id}`, {
           method: "GET",
+          credentials: "same-origin",
           cache: "no-store",
         });
 
@@ -93,6 +106,9 @@ export default function PerfilPage() {
           apellido_paterno: data.apellido_paterno || "",
           apellido_materno: data.apellido_materno || "",
           turno: data.turno || "",
+          genero: data.genero || "",
+          telefono: data.telefono || "",
+          fecha_nacimiento: data.fecha_nacimiento ? String(data.fecha_nacimiento).slice(0, 10) : "",
           contrasena: "",
           confirmarContrasena: "",
         });
@@ -146,8 +162,7 @@ export default function PerfilPage() {
         credentials: "same-origin",
         cache: "no-store",
       });
-      document.cookie =
-        "usuario_public=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "usuario_public=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       window.location.href = "/";
     } catch (error) {
       window.location.href = "/";
@@ -192,6 +207,9 @@ export default function PerfilPage() {
         apellido_paterno: apellidoPaterno,
         apellido_materno: apellidoMaterno,
         turno,
+        genero: formData.genero,
+        telefono: formData.telefono.trim(),
+        fecha_nacimiento: formData.fecha_nacimiento,
       };
 
       if (formData.contrasena.trim()) {
@@ -201,6 +219,7 @@ export default function PerfilPage() {
       const res = await fetch(`/api/usuarios/${usuario.usuario_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify(payload),
       });
 
@@ -217,6 +236,9 @@ export default function PerfilPage() {
               apellido_paterno: data.apellido_paterno,
               apellido_materno: data.apellido_materno,
               turno: data.turno,
+              genero: data.genero,
+              telefono: data.telefono,
+              fecha_nacimiento: data.fecha_nacimiento,
             }
           : prev,
       );
@@ -237,7 +259,6 @@ export default function PerfilPage() {
 
   return (
     <div className="dashboard-container">
-
       {/* SIDEBAR */}
       <aside className="sidebar">
         <div>
@@ -261,7 +282,6 @@ export default function PerfilPage() {
               Recursos de Ayuda
             </a>
 
-            {/* AVISO DE PRIVACIDAD */}
             <a className="sidebar-link" onClick={() => window.open("/aviso-privacidad", "_blank")}>
               <FiShield size={20} />
               Aviso de Privacidad
@@ -284,13 +304,11 @@ export default function PerfilPage() {
 
       {/* MAIN */}
       <main className="dashboard-main">
-
         <div className="dashboard-header">
           <h1>Hola, {usuario?.nombre || "..."}</h1>
         </div>
 
         <div className="perfil-container">
-
           <div className="perfil-title">
             <h2>Mi Perfil</h2>
             <p>Revisa y actualiza tus datos personales y profesionales</p>
@@ -306,14 +324,12 @@ export default function PerfilPage() {
             </div>
           ) : usuario ? (
             <div className="perfil-card">
-
               {/* HEADER AZUL */}
               <div className="perfil-card-header">
                 <h3>Información Personal</h3>
               </div>
 
               <div className="perfil-card-body">
-
                 {/* INFO PRINCIPAL */}
                 <div className="perfil-info-main">
                   <div className="perfil-avatar">
@@ -327,7 +343,6 @@ export default function PerfilPage() {
 
                 {/* GRID DE DATOS */}
                 <div className="perfil-grid">
-
                   <div className="perfil-dato">
                     <div className="perfil-dato-icon">
                       <FiMail size={20} />
@@ -360,6 +375,16 @@ export default function PerfilPage() {
 
                   <div className="perfil-dato">
                     <div className="perfil-dato-icon">
+                      <FiPhone size={20} />
+                    </div>
+                    <div>
+                      <strong>Teléfono</strong>
+                      <span>{usuario.telefono || "No registrado"}</span>
+                    </div>
+                  </div>
+
+                  <div className="perfil-dato">
+                    <div className="perfil-dato-icon">
                       <FiCalendar size={20} />
                     </div>
                     <div>
@@ -367,7 +392,6 @@ export default function PerfilPage() {
                       <span>{formatDate(usuario.fecha_registro)}</span>
                     </div>
                   </div>
-
                 </div>
 
                 {message ? <p className="perfil-message-ok">{message}</p> : null}
@@ -410,6 +434,39 @@ export default function PerfilPage() {
                           <p>{usuario.correo}</p>
                         </div>
                       </label>
+
+                      <label className="perfil-field">
+                        <span>Género</span>
+                        <select
+                          value={formData.genero}
+                          onChange={(e) => handleChange("genero", e.target.value)}
+                        >
+                          <option value="">Sin especificar</option>
+                          <option value="femenino">Femenino</option>
+                          <option value="masculino">Masculino</option>
+                          <option value="otro">Otro</option>
+                          <option value="prefiero_no_decir">Prefiero no decir</option>
+                        </select>
+                      </label>
+
+                      <label className="perfil-field">
+                        <span>Teléfono</span>
+                        <input
+                          type="tel"
+                          value={formData.telefono}
+                          onChange={(e) => handleChange("telefono", e.target.value)}
+                          placeholder="10 dígitos"
+                        />
+                      </label>
+
+                      <label className="perfil-field">
+                        <span>Fecha de nacimiento</span>
+                        <input
+                          type="date"
+                          value={formData.fecha_nacimiento}
+                          onChange={(e) => handleChange("fecha_nacimiento", e.target.value)}
+                        />
+                      </label>
                     </div>
                   </div>
 
@@ -418,10 +475,7 @@ export default function PerfilPage() {
                     <div className="perfil-form-grid">
                       <label className="perfil-field">
                         <span>Turno</span>
-                        <select
-                          value={formData.turno}
-                          onChange={(e) => handleChange("turno", e.target.value)}
-                        >
+                        <select value={formData.turno} onChange={(e) => handleChange("turno", e.target.value)}>
                           <option value="">Selecciona un turno</option>
                           <option value="Matutino">Matutino</option>
                           <option value="Vespertino">Vespertino</option>
@@ -478,14 +532,10 @@ export default function PerfilPage() {
                     Tu contraseña se guarda cifrada.
                   </p>
                 </div>
-
               </div>
-
             </div>
           ) : null}
-
         </div>
-
       </main>
     </div>
   );
