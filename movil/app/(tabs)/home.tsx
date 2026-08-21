@@ -43,6 +43,7 @@ type ChatPostResponse = {
   temporal?: boolean;
   alerta?: boolean;
   nivel?: "alto" | "crisis";
+  sentimiento?: "positivo" | "neutral" | "negativo";
 };
 
 const MENSAJE_BIENVENIDA: Message = {
@@ -381,9 +382,18 @@ export default function HomeScreen() {
         { id: crearIdMensaje(), role: "assistant", text: data.respuesta!.trim() },
       ]);
 
-      // El avatar reacciona brevemente según si hubo una señal de riesgo.
-      setAvatarMood(data.alerta ? "preocupacion" : "sonrisa_amplia");
-      setTimeout(() => setAvatarMood("sereno1"), 2500);
+      // El avatar reacciona según el sentimiento real detectado por
+      // Gemini, no solo si hubo alerta o no — así se siente vivo.
+      if (data.alerta) {
+        setAvatarMood("preocupacion");
+      } else if (data.sentimiento === "positivo") {
+        setAvatarMood("sonrisa_amplia");
+      } else if (data.sentimiento === "negativo") {
+        setAvatarMood("tristeza");
+      } else {
+        setAvatarMood("sereno2");
+      }
+      setTimeout(() => setAvatarMood("sereno1"), 3000);
 
       if (data.alerta) {
         setAlertaNivel(data.nivel === "crisis" ? "crisis" : "alto");
@@ -470,7 +480,7 @@ export default function HomeScreen() {
             mood={avatarMood}
             avatarGenero={avatarGenero}
             talking={avatarTalking}
-            size={180}
+            size={240}
           />
           <ThemedText variant="bodySmall" color={COLORS.textSecondary} style={{ marginTop: 8 }}>
             {avatarGenero === "masculino" ? "Jorimo" : "Jorima"}
@@ -681,7 +691,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
 
-  avatarSection: { alignItems: "center", paddingVertical: 8 },
+  avatarSection: { alignItems: "center", paddingVertical: 16 },
   relaxButton: {
     flexDirection: "row",
     alignItems: "center",

@@ -35,6 +35,7 @@ type ChatPostResponse = {
   temporal?: boolean;
   alerta?: boolean;
   nivel?: "alto" | "crisis";
+  sentimiento?: "positivo" | "neutral" | "negativo";
 };
 
 const MENSAJE_BIENVENIDA: Message = {
@@ -344,8 +345,16 @@ export default function UsuariosPage() {
         { id: crearIdMensaje(), role: "assistant", text: data.respuesta!.trim() },
       ]);
 
-      setAvatarMood(data.alerta ? "preocupacion" : "sonrisa_amplia");
-      setTimeout(() => setAvatarMood("sereno1"), 2500);
+      if (data.alerta) {
+        setAvatarMood("preocupacion");
+      } else if (data.sentimiento === "positivo") {
+        setAvatarMood("sonrisa_amplia");
+      } else if (data.sentimiento === "negativo") {
+        setAvatarMood("tristeza");
+      } else {
+        setAvatarMood("sereno2");
+      }
+      setTimeout(() => setAvatarMood("sereno1"), 3000);
 
       if (data.alerta) {
         setAlertaNivel(data.nivel === "crisis" ? "crisis" : "alto");
@@ -415,7 +424,7 @@ export default function UsuariosPage() {
 
         {/* AVATAR */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0 20px" }}>
-          <JorimaAvatarWeb mood={avatarMood} talking={avatarTalking} size={150} />
+          <JorimaAvatarWeb mood={avatarMood} talking={avatarTalking} size={200} />
           <p style={{ marginTop: 8, color: "var(--neutral-500)", fontSize: 14 }}>Jorima</p>
 
           <a

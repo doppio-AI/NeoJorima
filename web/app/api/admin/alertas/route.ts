@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSesionUsuario } from "@/lib/session";
+import { obtenerAlcance } from "@/lib/auth/institucion";
 
-/**
- * ⚠️ AJUSTAR: el README (§6.2) no confirma la codificación exacta de
- * `tipo_usuario` contra roles (Superadministrador, Administrador,
- * Psicólogo, Directivo, Colaborador, Docente, Personal administrativo).
- * Se deja aquí una constante centralizada para que se corrija en un solo
- * lugar en cuanto se confirme contra el esquema/seed real de la BD.
+/*
+ * NUEVO: ya no es un set de roles sueltos — se usa el mismo obtenerAlcance
+ * que ya scopea /api/usuarios y /api/admin/metricas por institución.
+ *
+ * - superadmin: ve TODAS las alertas (institucionales + de cuentas
+ *   personales sin institución) — es la única vista con supervisión global.
+ * - admin_institucion: ve SOLO alertas de usuarios de su propio edificio_id.
+ *   Nunca ve cuentas personales (no tienen institución que las reciba).
+ * - usuario (colaborador normal): 403. Un colaborador consulta su propia
+ *   situación en /api/estres/mio, no en el panel agregado de alertas.
  */
-const ROLES_CON_ACCESO_ALERTAS = new Set<number>([1, 2, 3]);
-
-function tieneAcceso(tipo_usuario: number): boolean {
-  return ROLES_CON_ACCESO_ALERTAS.has(tipo_usuario);
-}
 
 /* ───────────────────────────────────────────
    GET /api/admin/alertas?atendida=false&nivel=crisis
-   Lista alertas para el dashboard.
    ─────────────────────────────────────────── */
 
 export async function GET(req: NextRequest) {
@@ -26,7 +25,10 @@ export async function GET(req: NextRequest) {
     if (!sesion) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
-    if (!tieneAcceso(sesion.tipo_usuario)) {
+
+    const alcance = await obtenerAlcance(sesion.id, sesion.tipo_usuario);
+
+    if (alcance.rol === "usuario") {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
@@ -38,6 +40,13 @@ export async function GET(req: NextRequest) {
     if (atendidaParam !== null) where.atendida = atendidaParam === "true";
     if (nivel) where.nivel = nivel;
 
+    // El filtro que faltaba: un admin_institucion SOLO ve alertas de
+    // usuarios de su propio edificio_id. superadmin no agrega filtro
+    // (ve todo, incluidas cuentas personales sin institución).
+    if (alcance.rol === "admin_institucion") {
+      where.usuario = { edificio_id: alcance.edificio_id };
+    }
+
     const alertas = await prisma.alerta_riesgo.findMany({
       where,
       orderBy: [{ nivel: "desc" }, { created_at: "desc" }],
@@ -45,6 +54,7 @@ export async function GET(req: NextRequest) {
       select: {
         alerta_id: true,
         nivel: true,
+        categoria: true,
         resumen: true,
         atendida: true,
         atendida_por: true,
@@ -59,10 +69,6 @@ export async function GET(req: NextRequest) {
             nombre: true,
             apellido_paterno: true,
             edificio_id: true,
-            // Se expone identidad aquí a propósito: quien consulta este
-            // endpoint ya tiene rol autorizado para dar seguimiento
-            // individual (README §11, alternativa de "acceso restringido"
-            // en vez de anonimato absoluto).
           },
         },
       },
@@ -81,7 +87,6 @@ export async function GET(req: NextRequest) {
 /* ───────────────────────────────────────────
    PATCH /api/admin/alertas
    Body: { alerta_id, atendida?, notas_admin? }
-   Marca una alerta como atendida / agrega notas de seguimiento.
    ─────────────────────────────────────────── */
 
 export async function PATCH(req: NextRequest) {
@@ -90,7 +95,10 @@ export async function PATCH(req: NextRequest) {
     if (!sesion) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
-    if (!tieneAcceso(sesion.tipo_usuario)) {
+
+    const alcance = await obtenerAlcance(sesion.id, sesion.tipo_usuario);
+
+    if (alcance.rol === "usuario") {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
@@ -98,10 +106,24 @@ export async function PATCH(req: NextRequest) {
     const { alerta_id, atendida, notas_admin } = body;
 
     if (!alerta_id) {
-      return NextResponse.json(
-        { error: "Falta alerta_id" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Falta alerta_id" }, { status: 400 });
+    }
+
+    // Un admin_institucion solo puede tocar alertas de SU institución,
+    // aunque conozca el alerta_id exacto de otra.
+    if (alcance.rol === "admin_institucion") {
+      const alerta = await prisma.alerta_riesgo.findUnique({
+        where: { alerta_id: Number(alerta_id) },
+        select: { usuario: { select: { edificio_id: true } } },
+      });
+
+      if (!alerta) {
+        return NextResponse.json({ error: "Alerta no encontrada" }, { status: 404 });
+      }
+
+      if (alerta.usuario.edificio_id !== alcance.edificio_id) {
+        return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+      }
     }
 
     const data: Record<string, unknown> = {};

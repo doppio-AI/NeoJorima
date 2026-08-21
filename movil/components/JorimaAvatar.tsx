@@ -1,22 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { Image, StyleSheet, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, Image, StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { COLORS } from "@/constants/theme";
 
-/**
- * Expresiones disponibles. Los nombres coinciden con los archivos
- * en assets/jorima/*.png para que sea fácil ubicar cuál es cuál.
- */
 export type JorimaMood =
-  | "sereno1"        // neutral, ojos abiertos
-  | "sereno2"        // neutral, variante (para simular que "habla")
-  | "sonrisa_amplia" // contenta / respuesta positiva
-  | "preocupacion"   // alerta leve / mensaje del usuario con riesgo
-  | "tristeza";      // mood del usuario reportado como "mal" / "muy mal"
+  | "sereno1"
+  | "sereno2"
+  | "sonrisa_amplia"
+  | "preocupacion"
+  | "tristeza";
 
-// TODO: cuando existan las imágenes de "Jorimo" (versión masculina),
-// agregar aquí un segundo mapa IMAGENES_MASCULINO con la misma forma
-// y quitar el fallback de ícono de abajo.
 const IMAGENES_FEMENINO: Record<JorimaMood, any> = {
   sereno1: require("../assets/jorima/sereno1.png"),
   sereno2: require("../assets/jorima/sereno2.png"),
@@ -28,7 +21,6 @@ const IMAGENES_FEMENINO: Record<JorimaMood, any> = {
 interface Props {
   mood: JorimaMood;
   avatarGenero?: "femenino" | "masculino";
-  /** Si está "hablando", alterna sereno1/sereno2 para simular movimiento. */
   talking?: boolean;
   size?: number;
 }
@@ -40,6 +32,7 @@ export default function JorimaAvatar({
   size = 96,
 }: Props) {
   const [frame, setFrame] = useState<JorimaMood>(mood);
+  const escala = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (!talking) {
@@ -54,21 +47,33 @@ export default function JorimaAvatar({
     return () => clearInterval(interval);
   }, [talking, mood]);
 
+  // "Pop" cada vez que cambia la expresión visible — hace que se sienta
+  // viva en vez de solo cambiar de foto de golpe.
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(escala, { toValue: 1.14, duration: 150, useNativeDriver: true }),
+      Animated.spring(escala, { toValue: 1, useNativeDriver: true, friction: 4, tension: 60 }),
+    ]).start();
+  }, [frame]);
+
   const dimensiones = { width: size, height: size, borderRadius: size / 2 };
 
   if (avatarGenero === "masculino") {
-    // Placeholder hasta tener el set de imágenes de Jorimo.
     return (
-      <View style={[styles.container, styles.iconFallback, dimensiones]}>
-        <MaterialCommunityIcons name="robot" size={size * 0.55} color={COLORS.white} />
-      </View>
+      <Animated.View style={{ transform: [{ scale: escala }] }}>
+        <View style={[styles.container, styles.iconFallback, dimensiones]}>
+          <MaterialCommunityIcons name="robot" size={size * 0.55} color={COLORS.white} />
+        </View>
+      </Animated.View>
     );
   }
 
   return (
-    <View style={[styles.container, dimensiones]}>
-      <Image source={IMAGENES_FEMENINO[frame]} style={dimensiones} resizeMode="cover" />
-    </View>
+    <Animated.View style={{ transform: [{ scale: escala }] }}>
+      <View style={[styles.container, dimensiones]}>
+        <Image source={IMAGENES_FEMENINO[frame]} style={dimensiones} resizeMode="cover" />
+      </View>
+    </Animated.View>
   );
 }
 
