@@ -691,13 +691,12 @@
 /* ─────────── CTA BANNER ─────────── */
 
 .ctaBanner {
-  margin: 0 6vw;
+  margin: 100px 6vw;
   border-radius: 28px;
   background: linear-gradient(120deg, var(--koi) 0%, #c9603a 100%);
   padding: 64px 6vw;
   text-align: center;
   color: white;
-  transform: translateY(50%);
   box-shadow: 0 30px 60px rgba(225, 122, 84, 0.28);
 }
 
@@ -745,8 +744,7 @@
 .footer {
   background: var(--ink);
   color: rgba(255, 255, 255, 0.75);
-  padding: 160px 6vw 50px;
-  margin-top: -80px;
+  padding: 100px 6vw 50px;
 }
 
 .footerGrid {
@@ -872,6 +870,7 @@
   }
 
   .ctaBanner {
+    margin: 70px 6vw;
     padding: 48px 6vw;
   }
 
