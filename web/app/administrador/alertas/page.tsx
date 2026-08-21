@@ -5,10 +5,12 @@ import AdminSidebarSimple from "@/app/components/admin-sidebar-simple";
 import styles from "./alertas.module.css";
 
 type Nivel = "alto" | "crisis";
+type Categoria = "riesgo" | "renuncia";
 
 type Alerta = {
   alerta_id: number;
   nivel: Nivel;
+  categoria: Categoria;
   resumen: string | null;
   atendida: boolean;
   atendida_por: number | null;
@@ -194,21 +196,32 @@ export default function AlertasAdminPage() {
           </div>
         ) : (
           <div className={styles.list}>
-            {alertas.map((alerta) => (
+            {alertas.map((alerta) => {
+              const esRenuncia = alerta.categoria === "renuncia";
+
+              return (
               <div
                 key={alerta.alerta_id}
                 className={`${styles.card} ${
-                  alerta.nivel === "crisis" ? styles.cardCrisis : styles.cardAlto
+                  esRenuncia
+                    ? styles.cardRenuncia
+                    : alerta.nivel === "crisis"
+                    ? styles.cardCrisis
+                    : styles.cardAlto
                 }`}
               >
                 <div className={styles.cardTop}>
                   <div>
                     <span
                       className={`${styles.badge} ${
-                        alerta.nivel === "crisis" ? styles.badgeCrisis : styles.badgeAlto
+                        esRenuncia
+                          ? styles.badgeRenuncia
+                          : alerta.nivel === "crisis"
+                          ? styles.badgeCrisis
+                          : styles.badgeAlto
                       }`}
                     >
-                      {alerta.nivel}
+                      {esRenuncia ? "posible renuncia" : alerta.nivel}
                     </span>{" "}
                     <span className={styles.usuario}>
                       {alerta.usuario.nombre} {alerta.usuario.apellido_paterno}
@@ -261,7 +274,8 @@ export default function AlertasAdminPage() {
                   </p>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>

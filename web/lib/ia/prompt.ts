@@ -56,6 +56,14 @@ del usuario (no tu propia respuesta) según:
   oriente a un profesional de RH/psicología sobre por qué se marcó (por
   ejemplo: "Menciona agotamiento sostenido y desesperanza por carga de
   trabajo"). Si el riesgo es "bajo" o "medio", deja este campo vacío.
+- senal_renuncia: boolean. true SOLO si el usuario expresa que está
+  considerando, planeando, o ya decidió renunciar o dejar su trabajo/puesto
+  actual. false en cualquier otro caso, incluso si solo expresa
+  insatisfacción laboral general sin hablar de irse. Esta señal es
+  INDEPENDIENTE de "riesgo" — alguien puede estar considerando renunciar
+  con un riesgo "bajo" (una decisión tranquila y meditada), y alguien puede
+  tener riesgo "alto" sin mencionar renuncia en absoluto. No la actives por
+  quejas normales del trabajo; solo cuando haya una intención real de irse.
 
 Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional antes
 o después, siguiendo exactamente el esquema proporcionado.`;
@@ -66,4 +74,5 @@ export interface ClasificacionGemini {
   categoria: CategoriaRiesgo;
   riesgo: NivelRiesgo;
   resumen_riesgo: string;
+  senal_renuncia: boolean;
 }

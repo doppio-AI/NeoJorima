@@ -138,7 +138,8 @@ model alerta_riesgo {
   conversacion_id Int
   mensaje_id      Int
   nivel           String       @db.VarChar(20) // alto | crisis
-  resumen         String?
+  categoria       String       @default("riesgo") @db.VarChar(30) // riesgo | renuncia
+  resumen         String?      // explicación breve generada por el modelo, sin cita textual
   atendida        Boolean      @default(false)
   atendida_por    Int?
   atendida_en     DateTime?    @db.Timestamp(6)

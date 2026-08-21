@@ -31,8 +31,16 @@ const responseSchema = {
       enum: [...NIVELES_RIESGO],
     },
     resumen_riesgo: { type: SchemaType.STRING },
+    senal_renuncia: { type: SchemaType.BOOLEAN },
   },
-  required: ["respuesta", "sentimiento", "categoria", "riesgo", "resumen_riesgo"],
+  required: [
+    "respuesta",
+    "sentimiento",
+    "categoria",
+    "riesgo",
+    "resumen_riesgo",
+    "senal_renuncia",
+  ],
 } as const;
 
 const model = genAI.getGenerativeModel({
@@ -85,6 +93,10 @@ function clasificacionDeEmergencia(mensajeUsuario: string): ClasificacionGemini 
     resumen_riesgo: posibleCrisis
       ? "Fallo técnico en clasificación; el filtro de respaldo detectó posibles señales de crisis. Revisar manualmente."
       : "Fallo técnico en clasificación automática. Revisar manualmente por precaución.",
+    // No hay forma confiable de detectar esto con un filtro simple de
+    // palabras (a diferencia de crisis), así que ante fallo técnico
+    // se deja en false en vez de arriesgar falsos positivos.
+    senal_renuncia: false,
   };
 }
 
@@ -109,7 +121,8 @@ export async function generarRespuestaJorima(
     if (
       !parsed.respuesta ||
       !NIVELES_RIESGO.includes(parsed.riesgo) ||
-      !TAXONOMIA_CATEGORIAS.includes(parsed.categoria)
+      !TAXONOMIA_CATEGORIAS.includes(parsed.categoria) ||
+      typeof parsed.senal_renuncia !== "boolean"
     ) {
       throw new Error("Respuesta de Gemini con forma inesperada");
     }

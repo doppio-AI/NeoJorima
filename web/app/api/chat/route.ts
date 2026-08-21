@@ -355,41 +355,39 @@ export async function POST(req: NextRequest) {
         }),
       ]);
 
-    /* ── 8. Crear alerta sin romper el chat ── */
-
-    if (esAlerta) {
+   /* ── 8. Crear alerta sin romper el chat ──
+       Ahora dispara por dos motivos independientes:
+       - esAlerta: riesgo alto/crisis (como antes)
+       - clasificacion.senal_renuncia: el usuario habló de renunciar,
+         sin importar el nivel de riesgo
+       Si ambos aplican, se prioriza "riesgo" como categoría (es lo
+       más urgente de los dos). ── */
+ 
+    const disparaPorRenuncia = clasificacion.senal_renuncia === true;
+ 
+    if (esAlerta || disparaPorRenuncia) {
       try {
         await prisma.alerta_riesgo.create({
           data: {
             usuario_id: usuarioId,
             conversacion_id: conversacionId,
-
-            /*
-             * La alerta apunta al mensaje que produjo
-             * la clasificación, no a la respuesta de Gemini.
-             */
             mensaje_id: mensajeUsuario.mensaje_id,
-
             nivel: clasificacion.riesgo,
+            categoria: esAlerta ? "riesgo" : "renuncia",
             resumen:
               clasificacion.resumen_riesgo?.trim() ||
-              null,
+              (disparaPorRenuncia
+                ? "El usuario mencionó estar considerando renunciar a su trabajo."
+                : null),
           },
         });
       } catch (alertaError: unknown) {
-        /*
-         * Una falla en el dashboard o en su tabla no debe
-         * impedir que el empleado reciba la respuesta.
-         */
         console.error(
           "No se pudo crear la alerta de riesgo:",
           alertaError
         );
       }
     }
-
-    /* Evitar advertencia mientras no utilicemos este ID. */
-    void mensajeAsistente;
 
     /* ── 9. Responder al frontend ── */
 

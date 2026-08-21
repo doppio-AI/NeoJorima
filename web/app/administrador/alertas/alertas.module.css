@@ -89,6 +89,10 @@
   border-left: 4px solid #F97316;
 }
 
+.cardRenuncia {
+  border-left: 4px solid #7C3AED;
+}
+
 .cardTop {
   display: flex;
   align-items: center;
@@ -116,6 +120,10 @@
 
 .badgeAlto {
   background: #F97316;
+}
+
+.badgeRenuncia {
+  background: #7C3AED;
 }
 
 .usuario {
