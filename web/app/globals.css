@@ -792,55 +792,14 @@ input[type="file"] {
 
 @media (max-width: 900px) {
   .dashboard-container {
-    flex-direction: column;
     padding: var(--space-16);
-  }
-
-  .sidebar {
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-  }
-
-  .sidebar:not(.admin-sidebar) {
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: 12px;
-  }
-
-  .admin-sidebar {
-    width: 100%;
-  }
-
-  .admin-sidebar-shell {
-    width: 100%;
-  }
-
-  .sidebar nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .sidebar:not(.admin-sidebar) nav {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    gap: 8px;
-  }
-
-  .sidebar-link {
-    padding: 10px 12px;
-  }
-
-  .sidebar:not(.admin-sidebar) .sidebar-link {
-    width: 100%;
   }
 
   .dashboard-main {
     padding: 0;
     background: transparent;
+    /* Deja aire arriba para no quedar debajo del botón hamburguesa fijo */
+    padding-top: 56px;
   }
 
   .admin-filterbar,
@@ -2054,102 +2013,206 @@ input[type="file"] {
   }
 }
 
-.dashboard-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
+/* ===========================================================
+   Sidebar: layout centralizado (desktop estable + drawer móvil)
+   ===========================================================
+   Este bloque es la única fuente de verdad para el comportamiento
+   responsivo de la sidebar (usuario, administrador y superadmin
+   comparten las mismas clases: .sidebar, .sidebar-link, etc.).
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-  padding: 0 24px;
-  background-color: #0F4C81; /* mismo azul que tenía la sidebar */
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-.topbar-logo img {
-  display: block;
-}
-
-.topbar-user {
-  position: relative;
-}
-
-.topbar-user-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: auto;
-  height: 40px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background-color: rgba(255, 255, 255, 0.15);
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.topbar-user-btn:hover {
-  background-color: rgba(255, 255, 255, 0.25);
-}
-
-.topbar-dropdown {
-  position: absolute;
-  top: 48px;
-  right: 0;
-  min-width: 180px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  color: #1a1a1a;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.dropdown-item:hover {
-  background-color: #f3f4f6;
-}
-
-.dropdown-item-danger {
-  color: #d64545;
-}
-
-.dashboard-body {
-  display: flex;
-  flex: 1;
-}
+   - Escritorio: la sidebar es un item flex normal dentro de
+     .dashboard-container (display:flex). El contenido principal
+     (.dashboard-main) usa flex:1, así que se adapta automáticamente
+     al ancho de la sidebar sin necesidad de márgenes manuales.
+   - Colapsado: solo cambia el ancho (con transición). Los textos
+     de los links se ocultan y quedan los iconos + tooltip (title).
+   - Móvil (<900px): la sidebar sale del flujo normal (position:fixed)
+     y se comporta como un drawer que entra/sale con transform.
+     Nunca tapa el contenido de forma permanente: por defecto está
+     fuera de la pantalla y solo se muestra al abrir el menú.
+   =========================================================== */
 
 .sidebar {
-  width: 240px;
-  background-color: #ffffff; /* antes era azul */
-  border-right: 1px solid #e5e7eb; /* opcional, para separar visualmente */
-  padding: 24px 16px;
+  position: relative;
+  flex-shrink: 0;
+  transition: width 0.25s ease, padding 0.25s ease, transform 0.25s ease;
+  overflow: hidden;
 }
 
-.sidebar-link {
-  color: #1a1a1a; /* ajusta el color de texto ya que el fondo cambió a blanco */
+.sidebar-link-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sidebar-link.active,
-.sidebar-link:hover {
-  background-color: #f0f4f8;
-  color: #0F4C81;
+/* --- Modo colapsado (solo escritorio) --- */
+
+.sidebar.collapsed {
+  width: 84px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.sidebar.collapsed .sidebar-link-label,
+.sidebar.collapsed .admin-sidebar-eyebrow,
+.sidebar.collapsed .admin-sidebar-title,
+.sidebar.collapsed .sidebar-logo span {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-link,
+.sidebar.collapsed .logout,
+.sidebar.collapsed .admin-logout-button {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar.collapsed .sidebar-logo {
+  justify-content: center;
+  padding: 10px;
+}
+
+.sidebar.collapsed .sidebar-logo img {
+  max-width: 32px !important;
+}
+
+.sidebar.collapsed .admin-logout-button span {
+  display: none;
+}
+
+/* Botón para colapsar / expandir (solo tiene efecto en escritorio) */
+
+.sidebar-collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-collapse-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Botón hamburguesa y botón de cerrar: solo existen visualmente en móvil */
+
+.sidebar-mobile-toggle,
+.sidebar-mobile-close {
+  display: none;
+}
+
+/* Fondo oscuro del drawer: siempre fixed y fuera del flujo, para que
+   nunca afecte el layout flex de escritorio aunque esté en el DOM. */
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 39;
+}
+
+.sidebar-backdrop.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 900px) {
+  /* La sidebar se vuelve un drawer: fuera de pantalla por defecto,
+     no participa del flujo (fixed) y por lo tanto no puede empujar
+     ni tapar el contenido principal salvo cuando el usuario la abre. */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 84%;
+    max-width: 300px;
+    transform: translateX(-100%);
+    z-index: 40;
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    padding-top: 56px;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
+  }
+
+  /* El colapsado de escritorio no aplica en móvil: siempre se ve completa */
+  .sidebar.collapsed {
+    width: 84%;
+    max-width: 300px;
+    padding-left: 20px;
+    padding-right: 16px;
+  }
+
+  .sidebar.collapsed .sidebar-link-label,
+  .sidebar.collapsed .admin-sidebar-eyebrow,
+  .sidebar.collapsed .admin-sidebar-title,
+  .sidebar.collapsed .sidebar-logo span,
+  .sidebar.collapsed .admin-logout-button span {
+    display: inline;
+  }
+
+  .sidebar.collapsed .sidebar-link,
+  .sidebar.collapsed .logout,
+  .sidebar.collapsed .admin-logout-button {
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .sidebar-collapse-toggle {
+    display: none;
+  }
+
+  .sidebar-mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: var(--color-azul-profundo);
+    color: white;
+    cursor: pointer;
+    z-index: 30;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .sidebar-mobile-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.14);
+    color: white;
+    cursor: pointer;
+  }
+}
+
+[data-theme="dark"] .sidebar-mobile-toggle {
+  background: var(--color-verde-turquesa);
 }
