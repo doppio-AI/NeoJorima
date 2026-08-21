@@ -4,10 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
-  FiHome,
-  FiClock,
-  FiBookOpen,
-  FiLogOut,
   FiUser,
   FiMail,
   FiSave,
@@ -15,9 +11,9 @@ import {
   FiClock as FiTurno,
   FiCalendar,
   FiMapPin,
-  FiShield,
   FiPhone,
 } from "react-icons/fi";
+import Sidebar from "@/app/components/sidebar";
 
 type UsuarioCompleto = {
   usuario_id: number;
@@ -259,48 +255,7 @@ export default function PerfilPage() {
 
   return (
     <div className="dashboard-container">
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div>
-          <div className="sidebar-logo">
-            <img src="/logo.jpeg" alt="Jorima" style={{ width: "100%", maxWidth: "160px", height: "auto" }} />
-          </div>
-
-          <nav>
-            <a className="sidebar-link" onClick={() => router.push("/usuarios")}>
-              <FiHome size={20} />
-              Inicio
-            </a>
-
-            <a className="sidebar-link" onClick={() => router.push("/historial")}>
-              <FiClock size={20} />
-              Mi Historial
-            </a>
-
-            <a className="sidebar-link" onClick={() => router.push("/recursos")}>
-              <FiBookOpen size={20} />
-              Recursos de Ayuda
-            </a>
-
-            <a className="sidebar-link" onClick={() => window.open("/aviso-privacidad", "_blank")}>
-              <FiShield size={20} />
-              Aviso de Privacidad
-            </a>
-          </nav>
-        </div>
-
-        <div>
-          <a className="sidebar-link active" onClick={() => router.push("/perfil")}>
-            <FiUser size={20} />
-            Mi Perfil
-          </a>
-
-          <div className="logout" onClick={logout}>
-            <FiLogOut size={20} />
-            Cerrar Sesión
-          </div>
-        </div>
-      </aside>
+      <Sidebar active="perfil" />
 
       {/* MAIN */}
       <main className="dashboard-main">

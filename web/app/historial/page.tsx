@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Sidebar from "@/app/components/sidebar";
 
 import {
   FiHome,
@@ -195,48 +196,7 @@ export default function HistorialPage() {
     <div className="dashboard-container">
 
       {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div>
-          <div className="sidebar-logo">
-            <img src="/logo.jpeg" alt="Jorima" style={{ width: "100%", maxWidth: "160px", height: "auto" }} />
-          </div>
-
-          <nav>
-            <a className="sidebar-link" onClick={() => router.push("/usuarios")}>
-              <FiHome size={20} />
-              Inicio
-            </a>
-
-            <a className="sidebar-link active">
-              <FiClock size={20} />
-              Mi Historial
-            </a>
-
-            <a className="sidebar-link" onClick={() => router.push("/recursos")}>
-              <FiBookOpen size={20} />
-              Recursos de Ayuda
-            </a>
-
-            {/* AVISO DE PRIVACIDAD */}
-            <a className="sidebar-link" onClick={() => window.open("/aviso-privacidad", "_blank")}>
-              <FiShield size={20} />
-              Aviso de Privacidad
-            </a>
-          </nav>
-        </div>
-
-        <div>
-          <a className="sidebar-link" onClick={() => router.push("/perfil")}>
-            <FiUser size={20} />
-            Mi Perfil
-          </a>
-
-          <div className="logout" onClick={logout}>
-            <FiLogOut size={20} />
-            Cerrar Sesión
-          </div>
-        </div>
-      </aside>
+       <Sidebar active="historial" />
 
       {/* MAIN */}
       <main className="dashboard-main">
