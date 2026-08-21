@@ -1,5 +1,6 @@
 import "./globals.css";
 import ThemeFontControls from "@/app/components/ThemeFontControls";
+import { SidebarProvider } from "@/app/components/sidebar-context";
 import { Inter } from "next/font/google";
 
 const inter = Inter({
@@ -45,7 +46,11 @@ export default function RootLayout({
       </head>
 
       <body className={inter.variable}>
-        {children}
+        {/* Estado de la sidebar (colapsada / drawer móvil) centralizado
+            aquí para que todas las vistas compartan el mismo comportamiento. */}
+        <SidebarProvider>
+          {children}
+        </SidebarProvider>
 
         {/* Panel flotante */}
         <ThemeFontControls />
