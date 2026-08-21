@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FiLogOut } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 
-type AdminSection = "usuarios" | "metricas" | "ambiente" | "ayuda" | "alertas";
+type AdminSection = "usuarios" | "metricas" | "ayuda" | "alertas";
 
 interface AdminSidebarProps {
   active: AdminSection;
@@ -62,9 +62,6 @@ export default function AdminSidebarSimple({ active, onLogout }: AdminSidebarPro
           </Link>
           <Link className={getLinkClass("metricas")} href="/administrador/metricas">
             Métricas
-          </Link>
-          <Link className={getLinkClass("ambiente")} href="/administrador/ambiente">
-            Ambiente laboral
           </Link>
           <Link className={getLinkClass("ayuda")} href="/administrador/ayuda">
             Ayuda y guías
