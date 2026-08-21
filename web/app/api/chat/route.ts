@@ -393,9 +393,11 @@ export async function POST(req: NextRequest) {
 
     /* ── 9. Responder al frontend ── */
 
-    return respuestaJson(req, {
+       return respuestaJson(req, {
       conversacion_id: conversacionId,
       respuesta: clasificacion.respuesta,
+      alerta: esAlerta,
+      nivel: esAlerta ? clasificacion.riesgo : undefined,
     });
   } catch (error: unknown) {
     console.error(

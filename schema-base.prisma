@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model usuario {
+  usuario_id                                   Int                   @id @default(autoincrement())
+  tipo_usuario                                 Int
+  correo                                       String                @unique @db.VarChar(150)
+  nombre                                       String                @db.VarChar(100)
+  apellido_paterno                             String                @db.VarChar(100)
+  apellido_materno                             String?               @db.VarChar(100)
+  contrasena                                   String
+  edificio_id                                  Int?
+  turno                                        String?               @db.VarChar(50)
+  fecha_registro                               DateTime?             @default(now()) @db.Timestamp(6)
+
+  // ── NUEVO: campos del rework ──
+  tipo_cuenta                                  String                @default("personal") // "personal" | "empresa"
+  avatar_genero                                String                @default("femenino")  // "femenino" | "masculino"
+  onboarding_completo                          Boolean               @default(false)
+
+  codigo_verificacion                          codigo_verificacion[]
+  conversacion                                 conversacion[]
+  alerta_riesgo                                alerta_riesgo[]
+  reporte_reporte_usuario_personal_idTousuario reporte[]             @relation("reporte_usuario_personal_idTousuario")
+  reporte_reporte_usuario_rh_idTousuario       reporte[]             @relation("reporte_usuario_rh_idTousuario")
+  edificio                                     edificio?             @relation(fields: [edificio_id], references: [edificio_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_edificio")
+
+  // ── NUEVO: relaciones del rework ──
+  perfil_bienestar                             perfil_bienestar?
+  estado_animo_diario                          estado_animo_diario[]
+  nivel_estres                                 nivel_estres[]
+  sesion_relajacion                            sesion_relajacion[]
+
+  @@index([edificio_id], map: "idx_usuario_edificio")
+}
+
+model edificio {
+  edificio_id       Int                 @id @default(autoincrement())
+  nombre            String              @db.VarChar(100)
+  descripcion       String?
+  respuesta         respuesta[]
+  riesgo_prediccion riesgo_prediccion[]
+  usuario           usuario[]
+}
+
+model respuesta {
+  respuesta_id Int       @id @default(autoincrement())
+  edificio_id  Int
+  respuestas   Json
+  fecha        DateTime? @default(now()) @db.Timestamp(6)
+  edificio     edificio  @relation(fields: [edificio_id], references: [edificio_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model conversacion {
+  conversacion_id Int             @id @default(autoincrement())
+  usuario_id      Int
+  titulo          String?         @db.VarChar(200)
+  fecha_creacion  DateTime?       @default(now()) @db.Timestamp(6)
+  activa          Boolean         @default(true)
+  usuario         usuario         @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction)
+  mensaje         mensaje[]
+  alerta_riesgo   alerta_riesgo[]
+
+  @@index([usuario_id], map: "idx_conversacion_usuario")
+}
+
+model mensaje {
+  mensaje_id      Int             @id @default(autoincrement())
+  conversacion_id Int
+  role            String          @db.VarChar(20)
+  texto           String
+  sentimiento     String?         @db.VarChar(20) // positivo | neutral | negativo
+  categoria       String?         @db.VarChar(50)
+  riesgo          String?         @db.VarChar(20) // bajo | medio | alto | crisis
+  alerta          Boolean         @default(false)
+  fecha           DateTime?       @default(now()) @db.Timestamp(6)
+  conversacion    conversacion    @relation(fields: [conversacion_id], references: [conversacion_id], onDelete: Cascade, onUpdate: NoAction)
+  alerta_riesgo   alerta_riesgo[]
+
+  @@index([conversacion_id], map: "idx_mensaje_conversacion")
+  @@index([alerta], map: "idx_mensaje_alerta")
+}
+
+model codigo_verificacion {
+  codigo_id        Int      @id @default(autoincrement())
+  usuario_id       Int
+  codigo           String   @db.VarChar(6)
+  fecha_creacion   DateTime @default(now()) @db.Timestamp(6)
+  fecha_expiracion DateTime @db.Timestamp(6)
+  usado            Boolean  @default(false)
+  usuario          usuario  @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([usuario_id], map: "idx_codigo_usuario")
+  @@index([codigo], map: "idx_codigo_valor")
+}
+
+model reporte {
+  reporte_id                                   Int       @id @default(autoincrement())
+  usuario_rh_id                                Int
+  usuario_personal_id                          Int
+  nivel_urgencia                               String    @db.VarChar(50)
+  tipo_seguimiento                             String    @db.VarChar(100)
+  estado                                       String?   @default("Pendiente") @db.VarChar(50)
+  notas                                        String?
+  nombre_archivo                               String    @db.VarChar(255)
+  ruta                                         String    @db.VarChar(255)
+  hash                                         String    @db.VarChar(64)
+  fecha_creacion                               DateTime? @default(now()) @db.Timestamp(6)
+  archivo_binario                              Bytes?
+  mime_type                                    String?   @db.VarChar(150)
+  tamano_bytes                                 Int?
+  usuario_reporte_usuario_personal_idTousuario usuario   @relation("reporte_usuario_personal_idTousuario", fields: [usuario_personal_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_reporte_personal")
+  usuario_reporte_usuario_rh_idTousuario       usuario   @relation("reporte_usuario_rh_idTousuario", fields: [usuario_rh_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_reporte_rh")
+}
+
+model riesgo_prediccion {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  edificio_id           Int
+  fecha                 DateTime? @default(now()) @db.Timestamp(6)
+  respuestas            Json
+  riesgo_base           Float
+  riesgo_proyeccion_30d Float
+  created_at            DateTime? @default(now()) @db.Timestamp(6)
+  edificio              edificio  @relation(fields: [edificio_id], references: [edificio_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_riesgo_edificio")
+}
+
+model alerta_riesgo {
+  alerta_id       Int          @id @default(autoincrement())
+  usuario_id      Int
+  conversacion_id Int
+  mensaje_id      Int
+  nivel           String       @db.VarChar(20) // alto | crisis
+  resumen         String?
+  atendida        Boolean      @default(false)
+  atendida_por    Int?
+  atendida_en     DateTime?    @db.Timestamp(6)
+  notas_admin     String?
+  created_at      DateTime     @default(now()) @db.Timestamp(6)
+
+  usuario         usuario      @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade, onUpdate: NoAction)
+  conversacion    conversacion @relation(fields: [conversacion_id], references: [conversacion_id], onDelete: Cascade, onUpdate: NoAction)
+  mensaje         mensaje      @relation(fields: [mensaje_id], references: [mensaje_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([atendida, nivel], map: "idx_alerta_pendientes")
+  @@index([usuario_id], map: "idx_alerta_usuario")
+}
+
+/* ═══════════════════════════════════════════
+   NUEVO — modelos del rework (personal/empresa,
+   onboarding, ánimo diario, barra de estrés,
+   pausas activas)
+   ═══════════════════════════════════════════ */
+
+model perfil_bienestar {
+  perfil_id               Int      @id @default(autoincrement())
+  usuario_id               Int      @unique
+  horas_actividad_diaria   Int
+  tareas_por_dia           Int
+  tareas_pendientes_mes    Int
+  personas_dependientes    Int      @default(0)
+  nombres_dependientes     Json?
+  fecha_actualizacion      DateTime @updatedAt
+  usuario                  usuario  @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
+}
+
+model estado_animo_diario {
+  id         Int      @id @default(autoincrement())
+  usuario_id Int
+  estado     String   @db.VarChar(20) // muy mal | mal | regular | bien | muy bien
+  fecha      DateTime @default(now()) @db.Date
+  usuario    usuario  @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
+
+  @@unique([usuario_id, fecha])
+  @@index([usuario_id], map: "idx_animo_usuario")
+}
+
+model nivel_estres {
+  id           Int      @id @default(autoincrement())
+  usuario_id   Int
+  valor        Int
+  factor_animo Int
+  factor_carga Int
+  factor_chat  Int
+  fecha        DateTime @default(now())
+  usuario      usuario  @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
+
+  @@index([usuario_id, fecha], map: "idx_estres_usuario_fecha")
+}
+
+model sesion_relajacion {
+  id           Int      @id @default(autoincrement())
+  usuario_id   Int
+  tipo         String   @db.VarChar(30) // respiracion | estiramiento | juego | asmr
+  duracion_seg Int
+  completada   Boolean  @default(false)
+  fecha        DateTime @default(now())
+  usuario      usuario  @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
+
+  @@index([usuario_id], map: "idx_relajacion_usuario")
+}

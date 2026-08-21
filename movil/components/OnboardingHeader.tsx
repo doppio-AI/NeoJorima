@@ -1,8 +1,8 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { COLORS, SIZES } from "@/constants/theme";
 import ThemedText from "@/components/ThemedText";
+import JorimaAvatar from "@/components/JorimaAvatar";
 import type { AvatarGenero } from "@/context/OnboardingContext";
 
 interface Props {
@@ -32,13 +32,7 @@ export default function OnboardingHeader({
       </View>
 
       <View style={styles.bubbleRow}>
-        <View style={styles.avatarCircle}>
-          <MaterialCommunityIcons
-            name={avatarGenero === "masculino" ? "robot" : "robot-outline"}
-            size={26}
-            color={COLORS.white}
-          />
-        </View>
+        <JorimaAvatar mood="sereno1" avatarGenero={avatarGenero} size={44} />
 
         <View style={styles.bubble}>
           <ThemedText variant="bodySmall" color={COLORS.textSecondary}>

@@ -4,10 +4,6 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico") ||
@@ -16,63 +12,33 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-<<<<<<< HEAD
   const publicApiRoutes = [
     "/api/auth/login",
     "/api/auth/register",
     "/api/login",
-    "/api/registro/mobile", // NUEVO: alta de cuentas personales desde la app móvil
-    "/api/public-key",      // el login web lo pide antes de autenticarse; ya era necesario
+    "/api/registro/mobile",
+    "/api/public-key",
+    "/api/setup/superadmin", // TEMPORAL — quitar de esta lista cuando borres el endpoint
   ];
-=======
-
-  const publicApiRoutes = ["/api/auth/login", "/api/auth/register", "/api/login"];
->>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
   if (publicApiRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-<<<<<<< HEAD
   const usuarioCookie = request.cookies.get("usuario")?.value;
 
-  /*
-   * NUEVO: la app móvil no manda la cookie "usuario" — manda
-   * "Authorization: Bearer <token>" (ver lib/auth/session.ts).
-   * Aquí solo verificamos que el header exista y tenga forma de
-   * bearer token; la verificación criptográfica real (firma HMAC)
-   * ocurre en getSessionUser() dentro de cada route handler.
-   * Esto es equivalente en rigor a lo que ya se hacía con la cookie:
-   * el middleware tampoco valida la firma de la cookie, solo que
-   * exista y sea JSON parseable.
-   */
   const authHeader = request.headers.get("authorization");
   const tieneBearer = !!authHeader?.toLowerCase().startsWith("bearer ");
 
   if (!usuarioCookie && !tieneBearer) {
-=======
-
-  const usuarioCookie = request.cookies.get("usuario")?.value;
-
-
-  if (!usuarioCookie) {
-
->>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
     if (pathname.startsWith("/api")) {
       return NextResponse.json(
         { error: "No autorizado. Sesión requerida." },
         { status: 401 }
       );
     }
-<<<<<<< HEAD
-=======
-
->>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // Peticiones móviles (bearer, sin cookie): las reglas de rol de abajo
-  // son para las páginas web (/administrador, /usuarios), que no existen
-  // en móvil. Dejamos pasar y que cada route handler valide con getSessionUser.
   if (!usuarioCookie && tieneBearer) {
     return NextResponse.next();
   }
@@ -81,20 +47,39 @@ export function middleware(request: NextRequest) {
     const user = JSON.parse(usuarioCookie!);
     const tipo = Number(user.tipo_usuario);
 
+    /*
+     * Tres zonas de páginas web, una por rol:
+     *   1 = /administrador   (admin de institución)
+     *   2 = /usuarios        (colaborador / usuario final)
+     *   3 = /superadmin      (superadmin)
+     * Si alguien cae en la zona que no le toca, se le manda a la suya.
+     */
+    const destinoParaRol = (tipoActual: number): string => {
+      if (tipoActual === 1) return "/administrador";
+      if (tipoActual === 3) return "/superadmin";
+      return "/usuarios";
+    };
 
     if (pathname.startsWith("/administrador") && tipo !== 1) {
-      return NextResponse.redirect(new URL("/usuarios", request.url));
+      return NextResponse.redirect(new URL(destinoParaRol(tipo), request.url));
     }
 
     if (pathname.startsWith("/usuarios") && tipo !== 2) {
-      return NextResponse.redirect(new URL("/administrador", request.url));
+      return NextResponse.redirect(new URL(destinoParaRol(tipo), request.url));
     }
 
-<<<<<<< HEAD
-=======
+    if (pathname.startsWith("/superadmin") && tipo !== 3) {
+      return NextResponse.redirect(new URL(destinoParaRol(tipo), request.url));
+    }
 
->>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
-    if (pathname.startsWith("/api/admin") && tipo !== 1) {
+    if (pathname.startsWith("/api/admin") && tipo !== 1 && tipo !== 3) {
+      return NextResponse.json(
+        { error: "Acceso denegado: permisos insuficientes." },
+        { status: 403 }
+      );
+    }
+
+    if (pathname.startsWith("/api/superadmin") && tipo !== 3) {
       return NextResponse.json(
         { error: "Acceso denegado: permisos insuficientes." },
         { status: 403 }
@@ -104,25 +89,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   } catch (err) {
     if (pathname.startsWith("/api")) {
-      return NextResponse.json(
-        { error: "Sesión inválida." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Sesión inválida." }, { status: 401 });
     }
     return NextResponse.redirect(new URL("/", request.url));
   }
 }
 
-
 export const config = {
   matcher: [
     "/administrador/:path*",
     "/usuarios/:path*",
-<<<<<<< HEAD
+    "/superadmin/:path*",
     "/api/:path*",
   ],
-=======
-    "/api/:path*" 
-  ]
->>>>>>> e0e5d5906ce39da7bb0652a4cf9f2845bd2980d0
 };

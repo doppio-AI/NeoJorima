@@ -6,8 +6,6 @@ export default function OnboardingLayout() {
     <OnboardingProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="avatar" />
-        <Stack.Screen name="tipo-cuenta" />
-        <Stack.Screen name="empresa" />
         <Stack.Screen name="carga" />
         <Stack.Screen name="dependientes" />
         <Stack.Screen name="resumen" />

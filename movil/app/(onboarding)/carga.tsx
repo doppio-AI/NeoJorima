@@ -37,8 +37,8 @@ export default function CargaScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.content}>
           <OnboardingHeader
-            paso={4}
-            total={6}
+            paso={2}
+            total={4}
             mensaje="Cuéntame un poco de tu día a día para entender tu carga actual."
             avatarGenero={avatarGenero}
           />

@@ -5,17 +5,20 @@ import { recalcularEstres } from "@/lib/estres";
 
 /* ───────────────────────────────────────────
    POST /api/onboarding
+
+   Ya NO recibe tipo_cuenta ni edificio_id: eso lo define
+   /api/registro/mobile (siempre "personal") o el admin desde
+   el dashboard al crear al usuario (siempre "empresa" + su
+   edificio_id). Este endpoint solo llena el perfil de bienestar.
+
    Body: {
-     tipo_cuenta: "personal" | "empresa",
      avatar_genero: "femenino" | "masculino",
-     edificio_id?,               // solo si tipo_cuenta === "empresa"
      horas_actividad_diaria,
      tareas_por_dia,
      tareas_pendientes_mes,
      personas_dependientes,
-     nombres_dependientes?       // string[]
+     nombres_dependientes?
    }
-   usuario_id sale de la sesión, no del body.
    ─────────────────────────────────────────── */
 
 export async function POST(req: NextRequest) {
@@ -27,9 +30,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const {
-      tipo_cuenta,
       avatar_genero,
-      edificio_id,
       horas_actividad_diaria,
       tareas_por_dia,
       tareas_pendientes_mes,
@@ -38,7 +39,6 @@ export async function POST(req: NextRequest) {
     } = body;
 
     if (
-      !tipo_cuenta ||
       horas_actividad_diaria === undefined ||
       tareas_por_dia === undefined ||
       tareas_pendientes_mes === undefined
@@ -49,27 +49,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!["personal", "empresa"].includes(tipo_cuenta)) {
-      return NextResponse.json({ error: "tipo_cuenta inválido" }, { status: 400 });
-    }
-
-    if (tipo_cuenta === "empresa" && !edificio_id) {
-      return NextResponse.json(
-        { error: "edificio_id es requerido para cuentas de empresa" },
-        { status: 400 }
-      );
-    }
-
     const usuario_id = sesion.usuario_id;
 
     const [, perfil] = await prisma.$transaction([
       prisma.usuario.update({
         where: { usuario_id },
         data: {
-          tipo_cuenta,
           avatar_genero: avatar_genero ?? "femenino",
           onboarding_completo: true,
-          ...(tipo_cuenta === "empresa" ? { edificio_id: Number(edificio_id) } : {}),
         },
       }),
       prisma.perfil_bienestar.upsert({

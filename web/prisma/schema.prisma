@@ -37,6 +37,7 @@ model usuario {
   estado_animo_diario                          estado_animo_diario[]
   nivel_estres                                 nivel_estres[]
   sesion_relajacion                            sesion_relajacion[]
+  carga_diaria                                 carga_diaria[]
 
   @@index([edificio_id], map: "idx_usuario_edificio")
 }
@@ -204,4 +205,19 @@ model sesion_relajacion {
   usuario      usuario  @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
 
   @@index([usuario_id], map: "idx_relajacion_usuario")
+}
+
+/* ───────────────────────────────────────────
+   NUEVO — check-in diario de tareas pendientes
+   (alimenta factor_carga en tiempo real)
+   ─────────────────────────────────────────── */
+model carga_diaria {
+  id                Int      @id @default(autoincrement())
+  usuario_id        Int
+  tareas_pendientes Int
+  fecha             DateTime @default(now()) @db.Date
+  usuario           usuario  @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
+
+  @@unique([usuario_id, fecha])
+  @@index([usuario_id], map: "idx_carga_usuario")
 }

@@ -1,12 +1,12 @@
 import React from "react";
 import { SafeAreaView, StyleSheet, View, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { COLORS, SIZES } from "@/constants/theme";
 import ThemedText from "@/components/ThemedText";
 import ThemedButton from "@/components/ThemedButton";
 import OnboardingHeader from "@/components/OnboardingHeader";
+import JorimaAvatar from "@/components/JorimaAvatar";
 import { useOnboarding } from "@/context/OnboardingContext";
 
 export default function AvatarScreen() {
@@ -17,7 +17,7 @@ export default function AvatarScreen() {
       <View style={styles.content}>
         <OnboardingHeader
           paso={1}
-          total={6}
+          total={4}
           mensaje="¡Hola! Soy tu asistente de bienestar. Antes de empezar, ¿con qué versión te sientes más a gusto?"
           avatarGenero={avatarGenero}
         />
@@ -28,11 +28,7 @@ export default function AvatarScreen() {
             onPress={() => setAvatarGenero("femenino")}
             activeOpacity={0.85}
           >
-            <MaterialCommunityIcons
-              name="robot-outline"
-              size={40}
-              color={avatarGenero === "femenino" ? COLORS.white : COLORS.primary}
-            />
+            <JorimaAvatar mood="sonrisa_amplia" avatarGenero="femenino" size={72} />
             <ThemedText
               variant="h3"
               color={avatarGenero === "femenino" ? COLORS.white : COLORS.text}
@@ -46,11 +42,7 @@ export default function AvatarScreen() {
             onPress={() => setAvatarGenero("masculino")}
             activeOpacity={0.85}
           >
-            <MaterialCommunityIcons
-              name="robot"
-              size={40}
-              color={avatarGenero === "masculino" ? COLORS.white : COLORS.primary}
-            />
+            <JorimaAvatar mood="sonrisa_amplia" avatarGenero="masculino" size={72} />
             <ThemedText
               variant="h3"
               color={avatarGenero === "masculino" ? COLORS.white : COLORS.text}
@@ -61,10 +53,7 @@ export default function AvatarScreen() {
         </View>
 
         <View style={styles.footer}>
-          <ThemedButton
-            title="Continuar"
-            onPress={() => router.push("/(onboarding)/tipo-cuenta")}
-          />
+          <ThemedButton title="Continuar" onPress={() => router.push("/(onboarding)/carga")} />
         </View>
       </View>
     </SafeAreaView>

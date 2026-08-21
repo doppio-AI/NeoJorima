@@ -13,8 +13,6 @@ import { authFetch } from "@/lib/api";
 export default function ResumenScreen() {
   const {
     avatarGenero,
-    tipoCuenta,
-    edificioId,
     horasActividadDiaria,
     tareasPorDia,
     tareasPendientesMes,
@@ -25,25 +23,13 @@ export default function ResumenScreen() {
   const [loading, setLoading] = useState(false);
 
   const finalizar = async () => {
-    if (!tipoCuenta) {
-      Alert.alert("Falta información", "Selecciona si es una cuenta personal o de empresa.");
-      return;
-    }
-
-    if (tipoCuenta === "empresa" && !edificioId) {
-      Alert.alert("Falta información", "Selecciona tu organización antes de continuar.");
-      return;
-    }
-
     try {
       setLoading(true);
 
       const res = await authFetch("/api/onboarding", {
         method: "POST",
         body: JSON.stringify({
-          tipo_cuenta: tipoCuenta,
           avatar_genero: avatarGenero,
-          edificio_id: tipoCuenta === "empresa" ? edificioId : undefined,
           horas_actividad_diaria: horasActividadDiaria,
           tareas_por_dia: tareasPorDia,
           tareas_pendientes_mes: tareasPendientesMes,
@@ -65,8 +51,6 @@ export default function ResumenScreen() {
         return;
       }
 
-      // Reflejamos localmente que el onboarding ya se completó,
-      // para que el resto de la app (login, tabs) no vuelva a mandarlo aquí.
       const storedUser = await AsyncStorage.getItem("usuario");
       if (storedUser) {
         const usuario = JSON.parse(storedUser);
@@ -74,7 +58,6 @@ export default function ResumenScreen() {
           "usuario",
           JSON.stringify({
             ...usuario,
-            tipo_cuenta: tipoCuenta,
             avatar_genero: avatarGenero,
             onboarding_completo: true,
           })
@@ -90,7 +73,6 @@ export default function ResumenScreen() {
   };
 
   const resumenItems = [
-    { label: "Tipo de cuenta", valor: tipoCuenta === "empresa" ? "Empresa / institución" : "Uso personal" },
     { label: "Asistente", valor: avatarGenero === "masculino" ? "Jorimo" : "Jorima" },
     { label: "Horas de actividad al día", valor: String(horasActividadDiaria) },
     { label: "Tareas por día", valor: String(tareasPorDia) },
@@ -102,8 +84,8 @@ export default function ResumenScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <OnboardingHeader
-          paso={6}
-          total={6}
+          paso={4}
+          total={4}
           mensaje="Esto es lo que entendí. Si todo se ve bien, empecemos."
           avatarGenero={avatarGenero}
         />

@@ -1,0 +1,1 @@
+   npx tsx scripts/crear-superadmin.ts "admin@admin.com" "Admin123" "Diego" "Reyes"

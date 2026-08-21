@@ -38,8 +38,8 @@ export default function DependientesScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <OnboardingHeader
-          paso={5}
-          total={6}
+          paso={3}
+          total={4}
           mensaje="¿Hay personas que dependen de ti? Puedo usar esto para darte ánimo cuando lo necesites."
           avatarGenero={avatarGenero}
         />

@@ -4,11 +4,6 @@ import { prisma } from "@/lib/prisma";
    nivel_estres = 0.4 * factor_animo
                 + 0.3 * factor_carga
                 + 0.3 * factor_chat
-
-   factor_chat usa mensaje.riesgo, que ya llena
-   /api/chat vía lib/ia/gemini.ts. No se inventa
-   nada nuevo aquí, solo se consume lo que ya
-   existe en tu clasificación de Gemini.
    ─────────────────────────────────────────── */
 
 const clamp = (n: number, min = 0, max = 100) =>
@@ -22,7 +17,6 @@ const VALOR_ANIMO: Record<string, number> = {
   "muy bien": 0,
 };
 
-// Coincide con NIVELES_RIESGO de lib/ia/prompt.ts
 const VALOR_RIESGO: Record<string, number> = {
   crisis: 100,
   alto: 85,
@@ -49,6 +43,11 @@ async function calcularFactorAnimo(usuario_id: number): Promise<number> {
   return base > 50 ? base - decaimiento : base + decaimiento;
 }
 
+/* ── Factor de carga ──
+   NUEVO: ahora prioriza el check-in diario (carga_diaria) sobre el
+   valor fijo capturado en el onboarding. Si el usuario nunca ha hecho
+   el check-in diario, se usa perfil_bienestar.tareas_pendientes_mes
+   como antes (fallback). */
 async function calcularFactorCarga(usuario_id: number): Promise<number> {
   const perfil = await prisma.perfil_bienestar.findUnique({
     where: { usuario_id },
@@ -56,7 +55,24 @@ async function calcularFactorCarga(usuario_id: number): Promise<number> {
 
   if (!perfil) return 50;
 
-  const { horas_actividad_diaria, tareas_por_dia, tareas_pendientes_mes } = perfil;
+  const ultimaCarga = await prisma.carga_diaria.findFirst({
+    where: { usuario_id },
+    orderBy: { fecha: "desc" },
+  });
+
+  const { horas_actividad_diaria, tareas_por_dia } = perfil;
+
+  // Si hay un check-in diario reciente (últimos 3 días), pesa más que
+  // el estimado fijo del onboarding. Si está viejo, se ignora y se
+  // usa el valor del perfil para no operar con un dato obsoleto.
+  const diasSinCheckin = ultimaCarga
+    ? Math.floor((Date.now() - new Date(ultimaCarga.fecha).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const tareasPendientes =
+    ultimaCarga && diasSinCheckin !== null && diasSinCheckin <= 3
+      ? ultimaCarga.tareas_pendientes
+      : perfil.tareas_pendientes_mes;
 
   const capacidadDiaria = Math.max(1, tareas_por_dia - horas_actividad_diaria / 4);
 
@@ -65,7 +81,7 @@ async function calcularFactorCarga(usuario_id: number): Promise<number> {
   const diasRestantes = Math.max(1, finDeMes - hoy.getDate());
 
   const capacidadRestante = capacidadDiaria * diasRestantes;
-  const proporcion = tareas_pendientes_mes / capacidadRestante;
+  const proporcion = tareasPendientes / capacidadRestante;
 
   return clamp(proporcion * 50);
 }

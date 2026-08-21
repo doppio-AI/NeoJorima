@@ -10,12 +10,13 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 
 import { COLORS, SIZES } from "@/constants/theme";
 import ThemedText from "@/components/ThemedText";
-import ThemedButton from "@/components/ThemedButton";
 import { API_URL } from "@/config/api";
+import JorimaAvatar, { JorimaMood } from "@/components/JorimaAvatar";
+import AlertaRiesgoModal from "@/components/AlertaRiesgoModal";
 
 type Usuario = {
   id?: number;
@@ -24,6 +25,8 @@ type Usuario = {
   tipo_usuario?: number;
   edificio_id?: number;
   turno?: string | null;
+  avatar_genero?: "femenino" | "masculino";
+  tipo_cuenta?: "personal" | "empresa";
 };
 
 type Message = {
@@ -38,18 +41,8 @@ type ChatPostResponse = {
   respuesta?: string;
   error?: string;
   temporal?: boolean;
-};
-
-/* ── Coincide con la forma real de /api/chat (GET) ── */
-type ChatGetResponse = {
-  conversacion_id?: number;
-  mensajes?: Array<{
-    mensaje_id: number;
-    role: string;
-    texto: string;
-    fecha: string;
-  }>;
-  error?: string;
+  alerta?: boolean;
+  nivel?: "alto" | "crisis";
 };
 
 const MENSAJE_BIENVENIDA: Message = {
@@ -60,6 +53,14 @@ const MENSAJE_BIENVENIDA: Message = {
 
 const MAX_MENSAJE_LENGTH = 2000;
 
+const MOOD_OPCIONES: Array<{ label: string; value: string; avatarMood: JorimaMood }> = [
+  { label: "Muy mal", value: "muy mal", avatarMood: "tristeza" },
+  { label: "Mal", value: "mal", avatarMood: "tristeza" },
+  { label: "Regular", value: "regular", avatarMood: "sereno2" },
+  { label: "Bien", value: "bien", avatarMood: "sonrisa_amplia" },
+  { label: "Muy bien", value: "muy bien", avatarMood: "sonrisa_amplia" },
+];
+
 function crearIdMensaje(): string {
   return `${Date.now()}-${Math.random()}`;
 }
@@ -69,23 +70,39 @@ export default function HomeScreen() {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
 
+  // ── Ánimo del día ──
   const [mood, setMood] = useState<string | null>(null);
   const [sendingMood, setSendingMood] = useState(false);
-  const [moodSaved, setMoodSaved] = useState(false);
+  const [moodAnswered, setMoodAnswered] = useState(false);
+  const [checkingMood, setCheckingMood] = useState(true);
+
+  // ── Tareas pendientes del día ──
+  const [tareasPendientes, setTareasPendientes] = useState(0);
+  const [sendingCarga, setSendingCarga] = useState(false);
+  const [cargaAnswered, setCargaAnswered] = useState(false);
+  const [checkingCarga, setCheckingCarga] = useState(true);
+
+  // ── Avatar ──
+  const [avatarMood, setAvatarMood] = useState<JorimaMood>("sereno1");
+  const [avatarTalking, setAvatarTalking] = useState(false);
+
+  // ── Alerta de riesgo (watchdog) ──
+  const [alertaVisible, setAlertaVisible] = useState(false);
+  const [alertaNivel, setAlertaNivel] = useState<"alto" | "crisis">("alto");
 
   const [messages, setMessages] = useState<Message[]>([MENSAJE_BIENVENIDA]);
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadingHistorial, setLoadingHistorial] = useState(false);
   const [chatError, setChatError] = useState("");
   const [conversacionId, setConversacionId] = useState<number | null>(null);
 
   const scrollRef = useRef<ScrollView>(null);
 
+  const avatarGenero = usuario?.avatar_genero ?? "femenino";
+
   /* =========================
      Sesión cerrada / token inválido
-     Limpia AsyncStorage y manda al login.
   ========================= */
   const forzarLogout = async () => {
     await AsyncStorage.multiRemove(["usuario", "session_token"]);
@@ -98,19 +115,13 @@ export default function HomeScreen() {
   /* =========================
      CARGAR SESIÓN
   ========================= */
-
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const entries = await AsyncStorage.multiGet([
-          "usuario",
-          "session_token",
-        ]);
+        const entries = await AsyncStorage.multiGet(["usuario", "session_token"]);
 
         const storedUser = entries.find(([key]) => key === "usuario")?.[1];
-        const storedToken = entries.find(
-          ([key]) => key === "session_token"
-        )?.[1];
+        const storedToken = entries.find(([key]) => key === "session_token")?.[1];
 
         if (!storedUser || !storedToken) {
           await forzarLogout();
@@ -129,92 +140,97 @@ export default function HomeScreen() {
     loadUser();
   }, []);
 
-  /* =========================
-     CARGAR CONVERSACIÓN GUARDADA
-  ========================= */
-
+  /*
+   * NUEVO: ya NO se restaura la conversación guardada de sesiones
+   * anteriores. Cada vez que el usuario se loguea (esta pantalla se
+   * vuelve a montar), el chat arranca en blanco. Los mensajes viejos
+   * siguen en la base de datos (se pueden ver en Historial, y el
+   * cálculo de estrés los sigue usando) — solo dejamos de precargarlos
+   * aquí para que la conversación se sienta "fresca" cada sesión.
+   */
   useEffect(() => {
-    if (!usuario?.id || !sessionToken) {
-      return;
-    }
+    if (!usuario?.id) return;
+    // Limpiamos cualquier id de conversación que haya quedado guardado
+    // de la versión anterior de la app, para no dejar basura en AsyncStorage.
+    AsyncStorage.removeItem(`jorima_conversacion_${usuario.id}`).catch(() => {});
+  }, [usuario?.id]);
 
-    const cargarConversacion = async () => {
-      const storageKey = `jorima_conversacion_${usuario.id}`;
-      const guardada = await AsyncStorage.getItem(storageKey);
+  /* =========================
+     CHECAR SI YA CONTESTÓ EL ÁNIMO DE HOY
+  ========================= */
+  useEffect(() => {
+    if (!usuario?.id || !sessionToken) return;
 
-      if (!guardada) {
-        return;
-      }
-
-      const idGuardado = Number(guardada);
-
-      if (!Number.isInteger(idGuardado) || idGuardado <= 0) {
-        await AsyncStorage.removeItem(storageKey);
-        return;
-      }
-
-      setLoadingHistorial(true);
-      setChatError("");
+    const checarAnimoHoy = async () => {
+      setCheckingMood(true);
 
       try {
-        const res = await fetch(
-          `${API_URL}/api/chat?conversacion_id=${idGuardado}`,
-          {
-            method: "GET",
-            headers: { ...authHeaders() },
-          }
-        );
+        const res = await fetch(`${API_URL}/api/animo/hoy`, {
+          method: "GET",
+          headers: { ...authHeaders() },
+        });
 
         if (res.status === 401) {
           await forzarLogout();
           return;
         }
 
-        const data = (await res.json()) as ChatGetResponse;
+        const data = await res.json().catch(() => ({}));
 
-        if (!res.ok) {
-          await AsyncStorage.removeItem(storageKey);
-          setConversacionId(null);
-          setMessages([MENSAJE_BIENVENIDA]);
-          return;
+        if (res.ok && data.ya_contesto) {
+          setMoodAnswered(true);
+          if (typeof data.estado === "string") {
+            setMood(data.estado);
+          }
         }
-
-        const mensajesValidos = (data.mensajes ?? [])
-          .filter((m) => m.role === "user" || m.role === "assistant")
-          .map<Message>((m) => ({
-            id: String(m.mensaje_id),
-            role: m.role === "assistant" ? "assistant" : "user",
-            text: m.texto,
-          }));
-
-        setConversacionId(idGuardado);
-        setMessages(
-          mensajesValidos.length > 0 ? mensajesValidos : [MENSAJE_BIENVENIDA]
-        );
       } catch (error) {
-        setChatError("No fue posible recuperar la conversación anterior.");
+        // Si falla la consulta, dejamos el quiz visible por si acaso;
+        // no es crítico bloquear la pantalla por esto.
       } finally {
-        setLoadingHistorial(false);
-        scrollToBottom();
+        setCheckingMood(false);
       }
     };
 
-    void cargarConversacion();
+    void checarAnimoHoy();
   }, [usuario?.id, sessionToken]);
 
-  const getMoodIconName = () => {
-    switch (mood) {
-      case "muy mal":
-      case "mal":
-        return "emoticon-sad-outline";
-      case "regular":
-        return "emoticon-neutral-outline";
-      case "bien":
-      case "muy bien":
-      default:
-        return "emoticon-happy-outline";
-    }
-  };
+  /* =========================
+     CHECAR SI YA CONTESTÓ LA CARGA DE HOY
+  ========================= */
+  useEffect(() => {
+    if (!usuario?.id || !sessionToken) return;
+
+    const checarCargaHoy = async () => {
+      setCheckingCarga(true);
+
+      try {
+        const res = await fetch(`${API_URL}/api/carga/hoy`, {
+          method: "GET",
+          headers: { ...authHeaders() },
+        });
+
+        if (res.status === 401) {
+          await forzarLogout();
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.ya_contesto) {
+          setCargaAnswered(true);
+          if (typeof data.tareas_pendientes === "number") {
+            setTareasPendientes(data.tareas_pendientes);
+          }
+        }
+      } catch (error) {
+        // no bloqueamos la pantalla si falla
+      } finally {
+        setCheckingCarga(false);
+      }
+    };
+
+    void checarCargaHoy();
+  }, [usuario?.id, sessionToken]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -222,28 +238,25 @@ export default function HomeScreen() {
     }, 120);
   };
 
+  /* =========================
+     GUARDAR ÁNIMO DEL DÍA
+  ========================= */
   const saveMood = async (selectedMood: string) => {
-    if (!usuario?.edificio_id) {
-      Alert.alert("Error", "No se encontró el edificio del usuario.");
-      return;
-    }
-
     try {
       setSendingMood(true);
-      setMoodSaved(false);
 
-      const res = await fetch(`${API_URL}/api/respuesta`, {
+      const opcion = MOOD_OPCIONES.find((o) => o.value === selectedMood);
+      if (opcion) {
+        setAvatarMood(opcion.avatarMood);
+      }
+
+      const res = await fetch(`${API_URL}/api/animo`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...authHeaders(),
         },
-        body: JSON.stringify({
-          edificio_id: usuario.edificio_id,
-          respuestas: {
-            estado_animo: selectedMood,
-          },
-        }),
+        body: JSON.stringify({ estado: selectedMood }),
       });
 
       if (res.status === 401) {
@@ -254,11 +267,14 @@ export default function HomeScreen() {
       const data = await res.json();
 
       if (!res.ok) {
-        Alert.alert("Error", data.error || "No se pudo guardar la respuesta.");
+        Alert.alert("Error", data.error || "No se pudo guardar tu respuesta.");
         return;
       }
 
-      setMoodSaved(true);
+      // Se oculta el quiz una vez contestado, como pidió el flujo.
+      setMoodAnswered(true);
+
+      setTimeout(() => setAvatarMood("sereno1"), 2500);
     } catch (error) {
       Alert.alert("Error", "No se pudo conectar con el servidor.");
     } finally {
@@ -267,38 +283,67 @@ export default function HomeScreen() {
   };
 
   /* =========================
+     GUARDAR CARGA DE TAREAS DEL DÍA
+  ========================= */
+  const saveCarga = async () => {
+    try {
+      setSendingCarga(true);
+
+      const res = await fetch(`${API_URL}/api/carga`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders(),
+        },
+        body: JSON.stringify({ tareas_pendientes: tareasPendientes }),
+      });
+
+      if (res.status === 401) {
+        await forzarLogout();
+        return;
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Alert.alert("Error", data.error || "No se pudo guardar tu respuesta.");
+        return;
+      }
+
+      setCargaAnswered(true);
+    } catch (error) {
+      Alert.alert("Error", "No se pudo conectar con el servidor.");
+    } finally {
+      setSendingCarga(false);
+    }
+  };
+
+  /* =========================
      ENVIAR MENSAJE
   ========================= */
-
   const sendMessage = async () => {
     const textoUsuario = input.trim();
 
-    if (!textoUsuario || loading || loadingHistorial || !usuario?.id) {
+    if (!textoUsuario || loading || !usuario?.id) {
       return;
     }
 
     if (textoUsuario.length > MAX_MENSAJE_LENGTH) {
-      setChatError(
-        `El mensaje no puede superar los ${MAX_MENSAJE_LENGTH} caracteres.`
-      );
+      setChatError(`El mensaje no puede superar los ${MAX_MENSAJE_LENGTH} caracteres.`);
       return;
     }
 
-    setMessages((prev) => [
-      ...prev,
-      { id: crearIdMensaje(), role: "user", text: textoUsuario },
-    ]);
+    setMessages((prev) => [...prev, { id: crearIdMensaje(), role: "user", text: textoUsuario }]);
     setInput("");
     setChatError("");
     setLoading(true);
+    setAvatarTalking(true);
     scrollToBottom();
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
-      // usuario_id ya NO se manda: /api/chat lo obtiene de la sesión
-      // (cookie en web, Authorization: Bearer <token> en móvil).
       const res = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: {
@@ -327,30 +372,26 @@ export default function HomeScreen() {
         throw new Error("El asistente devolvió una respuesta inválida");
       }
 
-      if (
-        typeof data.conversacion_id === "number" &&
-        data.conversacion_id > 0
-      ) {
+      if (typeof data.conversacion_id === "number" && data.conversacion_id > 0) {
         setConversacionId(data.conversacion_id);
-        await AsyncStorage.setItem(
-          `jorima_conversacion_${usuario.id}`,
-          String(data.conversacion_id)
-        );
       }
 
       setMessages((prev) => [
         ...prev,
-        {
-          id: crearIdMensaje(),
-          role: "assistant",
-          text: data.respuesta!.trim(),
-        },
+        { id: crearIdMensaje(), role: "assistant", text: data.respuesta!.trim() },
       ]);
+
+      // El avatar reacciona brevemente según si hubo una señal de riesgo.
+      setAvatarMood(data.alerta ? "preocupacion" : "sonrisa_amplia");
+      setTimeout(() => setAvatarMood("sereno1"), 2500);
+
+      if (data.alerta) {
+        setAlertaNivel(data.nivel === "crisis" ? "crisis" : "alto");
+        setAlertaVisible(true);
+      }
     } catch (error) {
       const mensajeError =
-        error instanceof Error
-          ? error.message
-          : "No se pudo conectar con el servidor.";
+        error instanceof Error ? error.message : "No se pudo conectar con el servidor.";
 
       setChatError(mensajeError);
 
@@ -365,26 +406,20 @@ export default function HomeScreen() {
     } finally {
       clearTimeout(timeoutId);
       setLoading(false);
+      setAvatarTalking(false);
       scrollToBottom();
     }
   };
 
   const logout = async () => {
-    if (usuario?.id) {
-      await AsyncStorage.removeItem(`jorima_conversacion_${usuario.id}`);
-    }
     await forzarLogout();
   };
 
-  const startNewConversation = async () => {
+  const startNewConversation = () => {
     setConversacionId(null);
     setMessages([MENSAJE_BIENVENIDA]);
     setInput("");
     setChatError("");
-
-    if (usuario?.id) {
-      await AsyncStorage.removeItem(`jorima_conversacion_${usuario.id}`);
-    }
   };
 
   if (checkingSession) {
@@ -399,6 +434,9 @@ export default function HomeScreen() {
     );
   }
 
+  const mostrarQuizAnimo = !checkingMood && !moodAnswered;
+  const mostrarQuizCarga = !checkingCarga && !cargaAnswered;
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -411,11 +449,9 @@ export default function HomeScreen() {
             <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
               Bienvenido de vuelta
             </ThemedText>
-
             <ThemedText variant="h2" color={COLORS.primary}>
               Hola, {usuario?.nombre || usuario?.correo || "Usuario"}
             </ThemedText>
-
             {!!usuario?.turno && (
               <ThemedText variant="caption" color={COLORS.textSecondary}>
                 Turno: {usuario.turno}
@@ -428,68 +464,113 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.card}>
-          <ThemedText variant="h3" color={COLORS.text}>
-            ¿Cómo te sientes hoy antes de empezar?
+        {/* Avatar grande arriba del chat */}
+        <View style={styles.avatarSection}>
+          <JorimaAvatar
+            mood={avatarMood}
+            avatarGenero={avatarGenero}
+            talking={avatarTalking}
+            size={180}
+          />
+          <ThemedText variant="bodySmall" color={COLORS.textSecondary} style={{ marginTop: 8 }}>
+            {avatarGenero === "masculino" ? "Jorimo" : "Jorima"}
           </ThemedText>
 
-          <View style={styles.moodGrid}>
-            {[
-              { label: "Muy mal", value: "muy mal", icon: "emoticon-sad-outline" },
-              { label: "Mal", value: "mal", icon: "emoticon-sad-outline" },
-              { label: "Regular", value: "regular", icon: "emoticon-neutral-outline" },
-              { label: "Bien", value: "bien", icon: "emoticon-happy-outline" },
-              { label: "Muy bien", value: "muy bien", icon: "emoticon-happy-outline" },
-            ].map((item) => {
-              const selected = mood === item.value;
-
-              return (
-                <TouchableOpacity
-                  key={item.value}
-                  style={[
-                    styles.moodOption,
-                    selected && styles.moodOptionSelected,
-                  ]}
-                  onPress={async () => {
-                    setMood(item.value);
-                    await saveMood(item.value);
-                  }}
-                  disabled={sendingMood}
-                >
-                  <MaterialCommunityIcons
-                    name={item.icon as any}
-                    size={26}
-                    color={selected ? COLORS.white : COLORS.primary}
-                  />
-
-                  <ThemedText
-                    variant="bodySmall"
-                    color={selected ? COLORS.white : COLORS.text}
-                    style={styles.moodLabel}
-                  >
-                    {item.label}
-                  </ThemedText>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {sendingMood && (
-            <View style={styles.thanksBox}>
-              <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
-                Guardando respuesta...
-              </ThemedText>
-            </View>
-          )}
-
-          {!sendingMood && moodSaved && (
-            <View style={styles.thanksBox}>
-              <ThemedText variant="bodySmall" color={COLORS.secondary}>
-                ✓ Gracias por compartir cómo te sientes
-              </ThemedText>
-            </View>
-          )}
+          <TouchableOpacity
+            style={styles.relaxButton}
+            onPress={() => router.push("/(relajacion)")}
+          >
+            <Feather name="wind" size={16} color={COLORS.white} />
+            <ThemedText variant="bodySmall" color={COLORS.white}>
+              Necesito relajarme
+            </ThemedText>
+          </TouchableOpacity>
         </View>
+
+        {mostrarQuizAnimo && (
+          <View style={styles.card}>
+            <ThemedText variant="h3" color={COLORS.text}>
+              ¿Cómo te sientes hoy antes de empezar?
+            </ThemedText>
+
+            <View style={styles.moodGrid}>
+              {MOOD_OPCIONES.map((item) => {
+                const selected = mood === item.value;
+
+                return (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={[styles.moodOption, selected && styles.moodOptionSelected]}
+                    onPress={async () => {
+                      setMood(item.value);
+                      await saveMood(item.value);
+                    }}
+                    disabled={sendingMood}
+                  >
+                    <ThemedText
+                      variant="bodySmall"
+                      color={selected ? COLORS.white : COLORS.text}
+                      style={styles.moodLabel}
+                    >
+                      {item.label}
+                    </ThemedText>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {sendingMood && (
+              <View style={styles.thanksBox}>
+                <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
+                  Guardando respuesta...
+                </ThemedText>
+              </View>
+            )}
+          </View>
+        )}
+
+        {mostrarQuizCarga && (
+          <View style={styles.card}>
+            <ThemedText variant="h3" color={COLORS.text}>
+              ¿Cuántas tareas tienes pendientes hoy?
+            </ThemedText>
+            <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
+              Del trabajo, la escuela, o cualquier pendiente que traigas encima.
+            </ThemedText>
+
+            <View style={styles.stepperRow}>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => setTareasPendientes((prev) => Math.max(0, prev - 1))}
+                disabled={sendingCarga}
+              >
+                <Feather name="minus" size={18} color={COLORS.primary} />
+              </TouchableOpacity>
+
+              <ThemedText variant="h2" color={COLORS.primary}>
+                {tareasPendientes}
+              </ThemedText>
+
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => setTareasPendientes((prev) => prev + 1)}
+                disabled={sendingCarga}
+              >
+                <Feather name="plus" size={18} color={COLORS.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.submitCargaButton, sendingCarga && styles.sendButtonDisabled]}
+              onPress={() => void saveCarga()}
+              disabled={sendingCarga}
+            >
+              <ThemedText variant="bodySmall" color={COLORS.white}>
+                {sendingCarga ? "Guardando..." : "Confirmar"}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.card}>
           <View style={styles.chatHeaderRow}>
@@ -500,60 +581,31 @@ export default function HomeScreen() {
               </ThemedText>
             </View>
 
-            <TouchableOpacity
-              style={styles.newChatButton}
-              onPress={() => void startNewConversation()}
-            >
+            <TouchableOpacity style={styles.newChatButton} onPress={startNewConversation}>
               <Feather name="edit-3" size={16} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.chatMessages}>
-            {loadingHistorial && (
-              <View style={[styles.messageBubble, styles.assistantMessage]}>
-                <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
-                  Cargando conversación...
+            {messages.map((msg) => (
+              <View
+                key={msg.id}
+                style={[
+                  styles.messageBubble,
+                  msg.role === "assistant" ? styles.assistantMessage : styles.userMessage,
+                ]}
+              >
+                <ThemedText
+                  variant="bodySmall"
+                  color={msg.role === "user" ? COLORS.white : COLORS.text}
+                >
+                  {msg.text}
                 </ThemedText>
               </View>
-            )}
-
-            {!loadingHistorial &&
-              messages.map((msg) => (
-                <View
-                  key={msg.id}
-                  style={[
-                    styles.messageBubble,
-                    msg.role === "assistant"
-                      ? styles.assistantMessage
-                      : styles.userMessage,
-                  ]}
-                >
-                  {msg.role === "assistant" && (
-                    <MaterialCommunityIcons
-                      name={getMoodIconName() as any}
-                      size={18}
-                      color={COLORS.primary}
-                      style={styles.messageIcon}
-                    />
-                  )}
-
-                  <ThemedText
-                    variant="bodySmall"
-                    color={msg.role === "user" ? COLORS.white : COLORS.text}
-                  >
-                    {msg.text}
-                  </ThemedText>
-                </View>
-              ))}
+            ))}
 
             {loading && (
               <View style={[styles.messageBubble, styles.assistantMessage]}>
-                <MaterialCommunityIcons
-                  name={getMoodIconName() as any}
-                  size={18}
-                  color={COLORS.primary}
-                  style={styles.messageIcon}
-                />
                 <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
                   Escribiendo...
                 </ThemedText>
@@ -562,11 +614,7 @@ export default function HomeScreen() {
           </View>
 
           {!!chatError && (
-            <ThemedText
-              variant="caption"
-              color={COLORS.error ?? "#D14343"}
-              style={{ marginTop: 4 }}
-            >
+            <ThemedText variant="caption" color={COLORS.error ?? "#D14343"} style={{ marginTop: 4 }}>
               {chatError}
             </ThemedText>
           )}
@@ -582,205 +630,170 @@ export default function HomeScreen() {
                 setChatError("");
               }}
               maxLength={MAX_MENSAJE_LENGTH}
-              editable={!loading && !loadingHistorial}
+              editable={!loading}
               multiline
             />
 
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                (!input.trim() || loading || loadingHistorial) &&
-                  styles.sendButtonDisabled,
+                (!input.trim() || loading) && styles.sendButtonDisabled,
               ]}
               onPress={() => void sendMessage()}
-              disabled={loading || loadingHistorial || !input.trim()}
+              disabled={loading || !input.trim()}
             >
-              <Feather
-                name={loading ? "loader" : "send"}
-                size={18}
-                color={COLORS.white}
-              />
+              <Feather name={loading ? "clock" : "send"} size={18} color={COLORS.white} />
             </TouchableOpacity>
           </View>
         </View>
-
-        <ThemedButton
-          title="Ver mi historial"
-          variant="outline"
-          onPress={() => router.push("/(tabs)/historial")}
-        />
       </ScrollView>
+
+      <AlertaRiesgoModal
+        visible={alertaVisible}
+        onClose={() => setAlertaVisible(false)}
+        tipoCuenta={usuario?.tipo_cuenta === "empresa" ? "empresa" : "personal"}
+        nivel={alertaNivel}
+        avatarGenero={avatarGenero}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-
-  centerState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: SIZES.padding,
-  },
-
-  scrollContent: {
-    padding: SIZES.padding,
-    paddingBottom: 32,
-    gap: 16,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  scrollContent: { padding: SIZES.padding, gap: 16, flexGrow: 1 },
+  centerState: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 8,
   },
-
-  headerTextBlock: {
-    flex: 1,
-    paddingRight: 12,
-  },
-
+  headerTextBlock: { gap: 2 },
   logoutButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: COLORS.white,
-    justifyContent: "center",
-    alignItems: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.white,
+  },
+
+  avatarSection: { alignItems: "center", paddingVertical: 8 },
+  relaxButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
+    marginTop: 14,
   },
 
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: SIZES.radius,
     borderWidth: 1,
     borderColor: COLORS.border,
-    gap: 14,
+    padding: 16,
+    gap: 12,
   },
 
-  moodGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-
+  moodGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   moodOption: {
-    width: "30%",
-    minWidth: 92,
     flexGrow: 1,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
+    borderRadius: SIZES.radius,
+    paddingVertical: 12,
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
   },
-
   moodOptionSelected: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
   },
+  moodLabel: { textAlign: "center" },
+  thanksBox: { alignItems: "center" },
 
-  moodLabel: {
-    marginTop: 6,
-    textAlign: "center",
+  stepperRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 24,
   },
-
-  thanksBox: {
-    marginTop: 4,
+  stepperButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.white,
+  },
+  submitCargaButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: SIZES.radius,
+    paddingVertical: 12,
+    alignItems: "center",
   },
 
   chatHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    gap: 12,
   },
-
-  chatHeader: {
-    flex: 1,
-    gap: 4,
-  },
-
+  chatHeader: { gap: 2 },
   newChatButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.background,
     borderWidth: 1,
     borderColor: COLORS.border,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  chatMessages: {
-    gap: 10,
-  },
-
+  chatMessages: { gap: 10 },
   messageBubble: {
-    maxWidth: "88%",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    flexDirection: "row",
-    alignItems: "flex-start",
+    maxWidth: "82%",
+    borderRadius: SIZES.radius,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-
   assistantMessage: {
-    backgroundColor: COLORS.background,
     alignSelf: "flex-start",
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-
   userMessage: {
-    backgroundColor: COLORS.primary,
     alignSelf: "flex-end",
+    backgroundColor: COLORS.primary,
   },
 
-  messageIcon: {
-    marginRight: 8,
-    marginTop: 1,
-  },
-
-  chatInputRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 10,
-    marginTop: 6,
-  },
-
+  chatInputRow: { flexDirection: "row", gap: 10, alignItems: "flex-end" },
   chatInput: {
     flex: 1,
-    minHeight: 50,
-    maxHeight: 120,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 14,
-    backgroundColor: COLORS.background,
+    borderRadius: SIZES.radius,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    maxHeight: 100,
     color: COLORS.text,
-    textAlignVertical: "top",
   },
-
   sendButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: COLORS.secondary,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.primary,
     justifyContent: "center",
     alignItems: "center",
   },
-
-  sendButtonDisabled: {
-    opacity: 0.6,
-  },
+  sendButtonDisabled: { opacity: 0.5 },
 });
