@@ -33,11 +33,61 @@ export default function OnboardingPage() {
   const [nuevoNombre, setNuevoNombre] = useState("");
 
   useEffect(() => {
-    if (!readCookie("usuario_public")) {
-      router.replace("/");
-      return;
-    }
-    setCheckandoSesion(false);
+    const verificar = async () => {
+      const cookieValue = readCookie("usuario_public");
+
+      if (!cookieValue) {
+        router.replace("/");
+        return;
+      }
+
+      let usuarioId: number | null = null;
+
+      try {
+        const usuarioPublic = JSON.parse(cookieValue);
+        const id = Number(usuarioPublic.id ?? usuarioPublic.usuario_id);
+        usuarioId = Number.isInteger(id) && id > 0 ? id : null;
+      } catch {
+        usuarioId = null;
+      }
+
+      if (!usuarioId) {
+        router.replace("/");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${usuarioId}`, {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+
+        if (res.status === 401) {
+          router.replace("/");
+          return;
+        }
+
+        if (res.ok) {
+          const data = await res.json();
+          // Si ya terminó el wizard antes, no lo dejamos volver a verlo
+          // aunque haya llegado aquí por historial del navegador, un
+          // link viejo, etc.
+          if (data.onboarding_completo === true) {
+            router.replace("/usuarios");
+            return;
+          }
+        }
+      } catch {
+        // Si falla la verificación, dejamos pasar al wizard de todos
+        // modos: es mejor mostrar el wizard de más que dejar a alguien
+        // atorado sin poder entrar a la app.
+      }
+
+      setCheckandoSesion(false);
+    };
+
+    void verificar();
   }, [router]);
 
   const agregarNombre = () => {
