@@ -13,6 +13,7 @@ import {
 
 import JorimaAvatarWeb, { JorimaMood } from "@/app/components/JorimaAvatarWeb";
 import AlertaRiesgoModalWeb from "@/app/components/AlertaRiesgoModalWeb";
+import RachaBienestar from "@/app/components/RachaBienestar";
 import Sidebar from "@/app/components/sidebar";
 
 type Usuario = {
@@ -37,6 +38,14 @@ type ChatPostResponse = {
   nivel?: "alto" | "crisis";
   sentimiento?: "positivo" | "neutral" | "negativo";
 };
+
+type RachaInfo = {
+  racha_actual: number;
+  racha_raiz: number;
+  mejor_racha: number;
+};
+
+const RACHA_VACIA: RachaInfo = { racha_actual: 0, racha_raiz: 0, mejor_racha: 0 };
 
 const MENSAJE_BIENVENIDA: Message = {
   id: "bienvenida",
@@ -83,6 +92,9 @@ export default function UsuariosPage() {
   const [enviandoMood, setEnviandoMood] = useState(false);
   const [moodAnswered, setMoodAnswered] = useState(false);
   const [checkingMood, setCheckingMood] = useState(true);
+
+  // ── Racha de bienestar ("racha con raíz": nunca vuelve a cero) ──
+  const [racha, setRacha] = useState<RachaInfo>(RACHA_VACIA);
 
   // ── Tareas pendientes del día ──
   const [tareasPendientes, setTareasPendientes] = useState(0);
@@ -194,6 +206,7 @@ export default function UsuariosPage() {
           setMoodAnswered(true);
           if (typeof data.estado === "string") setMood(data.estado);
         }
+        if (res.ok && data.racha) setRacha(data.racha);
       } catch (e) {
         // no bloqueamos la pantalla
       } finally {
@@ -254,6 +267,7 @@ export default function UsuariosPage() {
       }
 
       setMoodAnswered(true);
+      if (data.racha) setRacha(data.racha);
       setTimeout(() => setAvatarMood("sereno1"), 2500);
     } catch (e) {
       setChatError("No se pudo conectar con el servidor.");
@@ -426,6 +440,12 @@ export default function UsuariosPage() {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0 20px" }}>
           <JorimaAvatarWeb mood={avatarMood} talking={avatarTalking} size={200} />
           <p style={{ marginTop: 8, color: "var(--neutral-500)", fontSize: 14 }}>Jorima</p>
+
+          {racha.racha_actual > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <RachaBienestar rachaActual={racha.racha_actual} rachaRaiz={racha.racha_raiz} />
+            </div>
+          )}
 
           <a
             href="/relajacion"

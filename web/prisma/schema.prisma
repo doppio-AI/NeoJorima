@@ -39,6 +39,7 @@ model usuario {
   nivel_estres                                 nivel_estres[]
   sesion_relajacion                            sesion_relajacion[]
   carga_diaria                                 carga_diaria[]
+  racha_bienestar                              racha_bienestar?
 
   @@index([edificio_id], map: "idx_usuario_edificio")
 }
@@ -222,4 +223,32 @@ model carga_diaria {
 
   @@unique([usuario_id, fecha])
   @@index([usuario_id], map: "idx_carga_usuario")
+}
+
+/* ───────────────────────────────────────────
+   NUEVO — racha de bienestar ("racha con raíz")
+
+   Nace de la idea de producto "Enganche Sano":
+   una racha que nunca vuelve a cero. Ver la
+   lógica completa y comentada en lib/racha.ts.
+
+   - racha_actual: días consecutivos de check-in
+     de ánimo. Si se rompe una racha, no cae a 0,
+     retoma desde racha_raiz + 1.
+   - racha_raiz: piso permanente que solo sube.
+     Cada semana completa (múltiplos de 7 en
+     racha_actual) consolida la mitad del progreso
+     como raíz, para siempre.
+   - mejor_racha: máximo histórico, solo para que
+     la persona vea su propio progreso (nunca se
+     compara contra otras personas).
+   ─────────────────────────────────────────── */
+model racha_bienestar {
+  usuario_id     Int       @id
+  racha_actual   Int       @default(0)
+  racha_raiz     Int       @default(0)
+  mejor_racha    Int       @default(0)
+  ultima_fecha   DateTime? @db.Date
+  actualizado_en DateTime  @updatedAt
+  usuario        usuario   @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
 }

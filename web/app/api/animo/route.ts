@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth/session";
 import { recalcularEstres } from "@/lib/estres";
+import { actualizarRacha } from "@/lib/racha";
 
 const ESTADOS_VALIDOS = ["muy mal", "mal", "regular", "bien", "muy bien"];
 
@@ -38,9 +39,12 @@ export async function POST(req: NextRequest) {
       create: { usuario_id, estado, fecha: hoy },
     });
 
-    const snapshot = await recalcularEstres(usuario_id);
+    const [snapshot, racha] = await Promise.all([
+      recalcularEstres(usuario_id),
+      actualizarRacha(usuario_id, hoy),
+    ]);
 
-    return NextResponse.json({ registro, nivel_estres: snapshot.valor });
+    return NextResponse.json({ registro, nivel_estres: snapshot.valor, racha });
   } catch (error: any) {
     console.error("Error en /api/animo:", error);
     return NextResponse.json({ error: "Error al registrar el ánimo" }, { status: 500 });
