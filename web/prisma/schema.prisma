@@ -40,6 +40,7 @@ model usuario {
   sesion_relajacion                            sesion_relajacion[]
   carga_diaria                                 carga_diaria[]
   racha_bienestar                              racha_bienestar?
+  intencion_diaria                             intencion_diaria[]
 
   @@index([edificio_id], map: "idx_usuario_edificio")
 }
@@ -251,4 +252,26 @@ model racha_bienestar {
   ultima_fecha   DateTime? @db.Date
   actualizado_en DateTime  @updatedAt
   usuario        usuario   @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
+}
+
+/* ───────────────────────────────────────────
+   NUEVO — "Buenos días, Jorima" (idea #1 de
+   Enganche Sano)
+
+   Una intención de una línea que la persona se
+   pone para el día, capturada junto al check-in
+   de ánimo matutino. No es una tarea ni una meta
+   medible — es un recordatorio que se le devuelve
+   a la persona el resto del día, para que el
+   check-in se sienta suyo y no una encuesta.
+   ─────────────────────────────────────────── */
+model intencion_diaria {
+  id         Int      @id @default(autoincrement())
+  usuario_id Int
+  texto      String   @db.VarChar(140)
+  fecha      DateTime @default(now()) @db.Date
+  usuario    usuario  @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
+
+  @@unique([usuario_id, fecha])
+  @@index([usuario_id], map: "idx_intencion_usuario")
 }

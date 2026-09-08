@@ -14,6 +14,7 @@ import {
 import JorimaAvatarWeb, { JorimaMood } from "@/app/components/JorimaAvatarWeb";
 import AlertaRiesgoModalWeb from "@/app/components/AlertaRiesgoModalWeb";
 import RachaBienestar from "@/app/components/RachaBienestar";
+import IntencionDelDia from "@/app/components/IntencionDelDia";
 import Sidebar from "@/app/components/sidebar";
 
 type Usuario = {
@@ -95,6 +96,13 @@ export default function UsuariosPage() {
 
   // ── Racha de bienestar ("racha con raíz": nunca vuelve a cero) ──
   const [racha, setRacha] = useState<RachaInfo>(RACHA_VACIA);
+
+  // ── Intención del día ("Buenos días, Jorima") ──
+  const [intencionInput, setIntencionInput] = useState("");
+  const [intencionTexto, setIntencionTexto] = useState<string | null>(null);
+  const [enviandoIntencion, setEnviandoIntencion] = useState(false);
+  const [intencionAnswered, setIntencionAnswered] = useState(false);
+  const [checkingIntencion, setCheckingIntencion] = useState(true);
 
   // ── Tareas pendientes del día ──
   const [tareasPendientes, setTareasPendientes] = useState(0);
@@ -234,8 +242,29 @@ export default function UsuariosPage() {
       }
     };
 
+    const checarIntencionHoy = async () => {
+      setCheckingIntencion(true);
+      try {
+        const res = await fetch("/api/intencion/hoy", { credentials: "same-origin", cache: "no-store" });
+        if (res.status === 401) {
+          router.replace("/");
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ya_contesto) {
+          setIntencionAnswered(true);
+          if (typeof data.texto === "string") setIntencionTexto(data.texto);
+        }
+      } catch (e) {
+        // no bloqueamos la pantalla
+      } finally {
+        setCheckingIntencion(false);
+      }
+    };
+
     void checarAnimoHoy();
     void checarCargaHoy();
+    void checarIntencionHoy();
   }, [usuario?.id, router]);
 
   /* =========================
@@ -273,6 +302,43 @@ export default function UsuariosPage() {
       setChatError("No se pudo conectar con el servidor.");
     } finally {
       setEnviandoMood(false);
+    }
+  };
+
+  /* =========================
+     GUARDAR INTENCIÓN DEL DÍA
+  ========================= */
+  const enviarIntencion = async () => {
+    const texto = intencionInput.trim();
+    if (!texto) return;
+
+    setEnviandoIntencion(true);
+
+    try {
+      const res = await fetch("/api/intencion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ texto }),
+      });
+
+      if (res.status === 401) {
+        router.replace("/");
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) {
+        setChatError(data.error || "No se pudo guardar tu intención.");
+        return;
+      }
+
+      setIntencionTexto(texto);
+      setIntencionAnswered(true);
+    } catch (e) {
+      setChatError("No se pudo conectar con el servidor.");
+    } finally {
+      setEnviandoIntencion(false);
     }
   };
 
@@ -425,6 +491,9 @@ export default function UsuariosPage() {
   }
 
   const mostrarQuizAnimo = !checkingMood && !moodAnswered;
+  // La intención se pregunta justo después del ánimo, como parte del
+  // mismo saludo matutino — no antes, para no anteponerse al ánimo.
+  const mostrarQuizIntencion = !checkingIntencion && !intencionAnswered && !mostrarQuizAnimo;
   const mostrarQuizCarga = !checkingCarga && !cargaAnswered;
 
   return (
@@ -441,9 +510,12 @@ export default function UsuariosPage() {
           <JorimaAvatarWeb mood={avatarMood} talking={avatarTalking} size={200} />
           <p style={{ marginTop: 8, color: "var(--neutral-500)", fontSize: 14 }}>Jorima</p>
 
-          {racha.racha_actual > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <RachaBienestar rachaActual={racha.racha_actual} rachaRaiz={racha.racha_raiz} />
+          {(racha.racha_actual > 0 || (intencionAnswered && intencionTexto)) && (
+            <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
+              {racha.racha_actual > 0 && (
+                <RachaBienestar rachaActual={racha.racha_actual} rachaRaiz={racha.racha_raiz} />
+              )}
+              {intencionAnswered && intencionTexto && <IntencionDelDia texto={intencionTexto} />}
             </div>
           )}
 
@@ -491,6 +563,46 @@ export default function UsuariosPage() {
             </div>
 
             {enviandoMood && <div className="mood-thanks">Guardando respuesta...</div>}
+          </div>
+        )}
+
+        {/* INTENCIÓN DEL DÍA ("Buenos días, Jorima") */}
+        {mostrarQuizIntencion && (
+          <div className="mood-card">
+            <h3>¿Cuál es tu intención para hoy?</h3>
+            <p style={{ color: "var(--neutral-500)", fontSize: 14, marginTop: 4 }}>
+              Una línea corta. Jorima te la recordará más tarde.
+            </p>
+
+            <input
+              type="text"
+              value={intencionInput}
+              maxLength={140}
+              placeholder="Ej. hoy quiero tener paciencia"
+              onChange={(e) => setIntencionInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !enviandoIntencion) void enviarIntencion();
+              }}
+              disabled={enviandoIntencion}
+              style={{
+                width: "100%",
+                marginTop: 12,
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "1px solid var(--neutral-200)",
+                fontSize: 14,
+                boxSizing: "border-box",
+              }}
+            />
+
+            <button
+              className="btn-primary"
+              onClick={() => void enviarIntencion()}
+              disabled={enviandoIntencion || !intencionInput.trim()}
+              style={{ width: "100%", marginTop: 12 }}
+            >
+              {enviandoIntencion ? "Guardando..." : "Listo"}
+            </button>
           </div>
         )}
 

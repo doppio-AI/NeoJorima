@@ -77,6 +77,13 @@ export default function HomeScreen() {
   const [moodAnswered, setMoodAnswered] = useState(false);
   const [checkingMood, setCheckingMood] = useState(true);
 
+  // ── Intención del día ("Buenos días, Jorima") ──
+  const [intencionInput, setIntencionInput] = useState("");
+  const [intencionTexto, setIntencionTexto] = useState<string | null>(null);
+  const [sendingIntencion, setSendingIntencion] = useState(false);
+  const [intencionAnswered, setIntencionAnswered] = useState(false);
+  const [checkingIntencion, setCheckingIntencion] = useState(true);
+
   // ── Tareas pendientes del día ──
   const [tareasPendientes, setTareasPendientes] = useState(0);
   const [sendingCarga, setSendingCarga] = useState(false);
@@ -196,6 +203,44 @@ export default function HomeScreen() {
   }, [usuario?.id, sessionToken]);
 
   /* =========================
+     CHECAR SI YA CONTESTÓ LA INTENCIÓN DE HOY
+  ========================= */
+  useEffect(() => {
+    if (!usuario?.id || !sessionToken) return;
+
+    const checarIntencionHoy = async () => {
+      setCheckingIntencion(true);
+
+      try {
+        const res = await fetch(`${API_URL}/api/intencion/hoy`, {
+          method: "GET",
+          headers: { ...authHeaders() },
+        });
+
+        if (res.status === 401) {
+          await forzarLogout();
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.ya_contesto) {
+          setIntencionAnswered(true);
+          if (typeof data.texto === "string") {
+            setIntencionTexto(data.texto);
+          }
+        }
+      } catch (error) {
+        // no bloqueamos la pantalla si falla
+      } finally {
+        setCheckingIntencion(false);
+      }
+    };
+
+    void checarIntencionHoy();
+  }, [usuario?.id, sessionToken]);
+
+  /* =========================
      CHECAR SI YA CONTESTÓ LA CARGA DE HOY
   ========================= */
   useEffect(() => {
@@ -280,6 +325,46 @@ export default function HomeScreen() {
       Alert.alert("Error", "No se pudo conectar con el servidor.");
     } finally {
       setSendingMood(false);
+    }
+  };
+
+  /* =========================
+     GUARDAR INTENCIÓN DEL DÍA
+  ========================= */
+  const saveIntencion = async () => {
+    const texto = intencionInput.trim();
+    if (!texto) return;
+
+    try {
+      setSendingIntencion(true);
+
+      const res = await fetch(`${API_URL}/api/intencion`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders(),
+        },
+        body: JSON.stringify({ texto }),
+      });
+
+      if (res.status === 401) {
+        await forzarLogout();
+        return;
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Alert.alert("Error", data.error || "No se pudo guardar tu intención.");
+        return;
+      }
+
+      setIntencionTexto(texto);
+      setIntencionAnswered(true);
+    } catch (error) {
+      Alert.alert("Error", "No se pudo conectar con el servidor.");
+    } finally {
+      setSendingIntencion(false);
     }
   };
 
@@ -445,6 +530,9 @@ export default function HomeScreen() {
   }
 
   const mostrarQuizAnimo = !checkingMood && !moodAnswered;
+  // La intención se pregunta justo después del ánimo, como parte del
+  // mismo saludo matutino — no antes, para no anteponerse al ánimo.
+  const mostrarQuizIntencion = !checkingIntencion && !intencionAnswered && !mostrarQuizAnimo;
   const mostrarQuizCarga = !checkingCarga && !cargaAnswered;
 
   return (
@@ -495,6 +583,14 @@ export default function HomeScreen() {
               Necesito relajarme
             </ThemedText>
           </TouchableOpacity>
+
+          {intencionAnswered && !!intencionTexto && (
+            <View style={styles.intencionBadge}>
+              <ThemedText variant="caption" color={COLORS.textSecondary} numberOfLines={1}>
+                🎯 {intencionTexto}
+              </ThemedText>
+            </View>
+          )}
         </View>
 
         {mostrarQuizAnimo && (
@@ -536,6 +632,41 @@ export default function HomeScreen() {
                 </ThemedText>
               </View>
             )}
+          </View>
+        )}
+
+        {mostrarQuizIntencion && (
+          <View style={styles.card}>
+            <ThemedText variant="h3" color={COLORS.text}>
+              ¿Cuál es tu intención para hoy?
+            </ThemedText>
+            <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
+              Una línea corta. Jorima te la recordará más tarde.
+            </ThemedText>
+
+            <TextInput
+              style={styles.intencionInput}
+              placeholder="Ej. hoy quiero tener paciencia"
+              placeholderTextColor={COLORS.textSecondary}
+              value={intencionInput}
+              onChangeText={setIntencionInput}
+              maxLength={140}
+              editable={!sendingIntencion}
+              onSubmitEditing={() => void saveIntencion()}
+            />
+
+            <TouchableOpacity
+              style={[
+                styles.submitCargaButton,
+                (!intencionInput.trim() || sendingIntencion) && styles.sendButtonDisabled,
+              ]}
+              onPress={() => void saveIntencion()}
+              disabled={sendingIntencion || !intencionInput.trim()}
+            >
+              <ThemedText variant="bodySmall" color={COLORS.white}>
+                {sendingIntencion ? "Guardando..." : "Listo"}
+              </ThemedText>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -701,6 +832,24 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 24,
     marginTop: 14,
+  },
+  intencionBadge: {
+    marginTop: 10,
+    maxWidth: "90%",
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  intencionInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: SIZES.radius,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: COLORS.text,
   },
 
   card: {
