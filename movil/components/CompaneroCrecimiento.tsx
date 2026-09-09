@@ -40,9 +40,7 @@ export default function CompaneroCrecimiento({ diasTotales }: { diasTotales: num
   return (
     <View style={styles.container}>
       <ThemedText style={styles.emoji}>{etapa.emoji}</ThemedText>
-      <ThemedText variant="bodySmall" style={{ fontWeight: "600" }}>
-        {etapa.nombre}
-      </ThemedText>
+      <ThemedText variant="bodySmall">{etapa.nombre}</ThemedText>
       <ThemedText variant="caption" color={COLORS.textSecondary}>
         {siguiente
           ? `${siguiente.minDias - diasTotales} ${siguiente.minDias - diasTotales === 1 ? "día" : "días"} para crecer más`

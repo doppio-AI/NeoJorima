@@ -1,31 +1,47 @@
+/*
+ * Estilo "Duolingo" (jorima-estilo-duolingo.md, bloque 2): una sola
+ * familia (Nunito) para todo, geométrica y de terminaciones
+ * redondeadas. Incluso el cuerpo de texto va en semibold — es
+ * intencional, no un descuido.
+ *
+ * Las fuentes se cargan con useFonts en app/_layout.tsx; ver ahí
+ * los nombres exactos de @expo-google-fonts/nunito.
+ */
 const Typography = {
   h1: {
-    fontSize: 32,
-    fontWeight: "700" as const,
+    fontSize: 30,
+    lineHeight: 36,
+    fontFamily: "Nunito_800ExtraBold",
   },
   h2: {
     fontSize: 24,
-    fontWeight: "700" as const,
+    lineHeight: 30,
+    fontFamily: "Nunito_800ExtraBold",
   },
   h3: {
-    fontSize: 20,
-    fontWeight: "600" as const,
+    fontSize: 19,
+    lineHeight: 25,
+    fontFamily: "Nunito_700Bold",
   },
   body: {
     fontSize: 16,
-    fontWeight: "400" as const,
+    lineHeight: 24,
+    fontFamily: "Nunito_600SemiBold",
   },
   bodySmall: {
     fontSize: 14,
-    fontWeight: "400" as const,
+    lineHeight: 21,
+    fontFamily: "Nunito_600SemiBold",
   },
   button: {
     fontSize: 16,
-    fontWeight: "600" as const,
+    lineHeight: 20,
+    fontFamily: "Nunito_800ExtraBold",
   },
   caption: {
     fontSize: 12,
-    fontWeight: "400" as const,
+    lineHeight: 16,
+    fontFamily: "Nunito_700Bold",
   },
 };
 

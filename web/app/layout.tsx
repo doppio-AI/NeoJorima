@@ -1,12 +1,15 @@
 import "./globals.css";
 import ThemeFontControls from "@/app/components/ThemeFontControls";
 import { SidebarProvider } from "@/app/components/sidebar-context";
-import { Inter } from "next/font/google";
+import { Nunito } from "next/font/google";
 
-const inter = Inter({
+// Estilo "Duolingo" (jorima-estilo-duolingo.md, bloque 2): geométrica,
+// terminaciones redondeadas, un solo peso pesado en vez de varios finos.
+const nunito = Nunito({
   subsets: ["latin"],
+  weight: ["600", "700", "800"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-nunito",
 });
 
 export const metadata = {
@@ -20,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning className={nunito.variable}>
       <head>
         <link
           rel="stylesheet"
@@ -45,7 +48,7 @@ export default function RootLayout({
         />
       </head>
 
-      <body className={inter.variable}>
+      <body className={nunito.variable}>
         {/* Estado de la sidebar (colapsada / drawer móvil) centralizado
             aquí para que todas las vistas compartan el mismo comportamiento. */}
         <SidebarProvider>

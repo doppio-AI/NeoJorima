@@ -3,7 +3,7 @@ import { FiShield, FiFileText, FiLock } from "react-icons/fi";
 export default function AvisoPrivacidad() {
   return (
     <main style={{ backgroundColor: "var(--neutral-50, #F7FAFC)", minHeight: "100vh", padding: "40px 20px" }}>
-      <div style={{ maxWidth: "800px", margin: "0 auto", backgroundColor: "#FFFFFF", padding: "40px", borderRadius: "8px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)", fontFamily: "var(--font-inter, sans-serif)", color: "var(--neutral-900, #333)" }}>
+      <div style={{ maxWidth: "800px", margin: "0 auto", backgroundColor: "#FFFFFF", padding: "40px", borderRadius: "8px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)", fontFamily: "var(--font-nunito, sans-serif)", color: "var(--neutral-900, #333)" }}>
         
         {/* ENCABEZADO */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", borderBottom: "2px solid #0F4C81", paddingBottom: "16px", marginBottom: "32px" }}>

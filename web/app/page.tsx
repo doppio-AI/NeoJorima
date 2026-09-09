@@ -1,17 +1,24 @@
 import Link from "next/link";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Nunito } from "next/font/google";
 import styles from "./landing.module.css";
 
-const fraunces = Fraunces({
+/*
+ * Estilo "Duolingo" (jorima-estilo-duolingo.md, bloque 2): una sola
+ * familia para todo, sin mezclar una serif de encabezados con una
+ * sans-serif de cuerpo. --font-display y --font-body se quedan como
+ * nombres de variable (landing.module.css los sigue usando), pero
+ * ambos apuntan ahora a Nunito.
+ */
+const nunitoDisplay = Nunito({
   subsets: ["latin"],
-  weight: ["500", "600"],
+  weight: ["600", "700", "800"],
   variable: "--font-display",
   display: "swap",
 });
 
-const jakarta = Plus_Jakarta_Sans({
+const nunitoBody = Nunito({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["600", "700", "800"],
   variable: "--font-body",
   display: "swap",
 });
@@ -51,7 +58,7 @@ const FEATURES = [
 
 export default function LandingPage() {
   return (
-    <div className={`${styles.page} ${fraunces.variable} ${jakarta.variable}`} style={{ fontFamily: "var(--font-body)" }}>
+    <div className={`${styles.page} ${nunitoDisplay.variable} ${nunitoBody.variable}`} style={{ fontFamily: "var(--font-body)" }}>
       {/* NAV */}
       <header className={styles.nav}>
         <div className={styles.navBrand}>
