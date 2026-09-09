@@ -1,9 +1,8 @@
 const Radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  full: 9999,
+  sm: 12,
+  md: 16, // botones e inputs
+  lg: 20, // tarjetas
+  full: 999,
 };
 
 export default Radius;

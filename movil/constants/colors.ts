@@ -1,6 +1,16 @@
 const Colors = {
   primary: "#0F4C81",
+  primaryShadow: "#0A3557",
   secondary: "#2A9D8F",
+  secondaryShadow: "#1C7268",
+
+  // Acentos del estilo "Duolingo" (ver jorima-estilo-duolingo.md, bloque 1)
+  sol: "#F4A62A",
+  solShadow: "#C4831F",
+  lavanda: "#8B7FD4",
+  lavandaShadow: "#6B5FB0",
+  coral: "#E76F51",
+  coralShadow: "#B8543C",
 
   white: "#FFFFFF",
   black: "#111827",
@@ -20,11 +30,12 @@ const Colors = {
   warning: "#F59E0B",
   error: "#DC2626",
 
-  background: "#F9FAFB",
+  background: "#F7F9FA",
   surface: "#FFFFFF",
-  border: "#D1D5DB",
-  text: "#111827",
-  textSecondary: "#6B7280",
+  border: "#E1E6EA",
+  borderStrong: "#CBD3DA",
+  text: "#1F2933",
+  textSecondary: "#66757F",
 };
 
 export default Colors;

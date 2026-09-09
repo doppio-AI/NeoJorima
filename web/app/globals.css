@@ -13,7 +13,7 @@
   --neutral-900: #111827;
 
   /* Sistema de escalado tipográfico fluido */
-  --font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family: var(--font-nunito), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-scale: 1;
 
   /* Tamaños base escalables con clamp() */
@@ -49,11 +49,32 @@
   --space-24: 24px;
   --space-32: 32px;
 
-  --radius-lg: 14px;
-
-  --shadow-md: 0 16px 40px rgba(15, 23, 42, 0.08);
-  --shadow-sm: 0 8px 20px rgba(15, 23, 42, 0.08);
   --border: 1px solid rgba(15, 23, 42, 0.08);
+
+  /* ── Estilo "Duolingo" (jorima-estilo-duolingo.md, bloque 1) ──
+     Sombras sólidas en vez de difusas: un tono más oscuro por
+     cada color de marca, usado como border-bottom, no box-shadow. */
+  --c-primary: #0F4C81;
+  --c-primary-shadow: #0A3557;
+  --c-secondary: #2A9D8F;
+  --c-secondary-shadow: #1C7268;
+  --c-sol: #F4A62A;
+  --c-sol-shadow: #C4831F;
+  --c-lavanda: #8B7FD4;
+  --c-lavanda-shadow: #6B5FB0;
+  --c-coral: #E76F51;
+  --c-coral-shadow: #B8543C;
+
+  --c-bg: #F7F9FA;
+  --c-surface: #FFFFFF;
+  --c-border: #E1E6EA;
+  --c-border-strong: #CBD3DA;
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+
+  --border-w: 2px;
 }
 
 [data-theme="dark"] {
@@ -95,7 +116,14 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-body, button, input, select, textarea {
+/*
+ * OJO: "body" NO va en esta lista — igualaba especificidad con la
+ * regla de arriba y, por venir después, la pisaba con "inherit"
+ * (heredando de <html>, que nunca tuvo font-family propio y caía
+ * al serif por defecto del navegador). Bug preexistente, encontrado
+ * al migrar tipografía a Nunito (jorima-estilo-duolingo.md, bloque 2).
+ */
+button, input, select, textarea {
   font-family: inherit;
 }
 
@@ -171,7 +199,7 @@ p {
 .login-card {
   background-color: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
   padding: var(--space-24);
   width: min(100%, 420px);
   display: flex;
@@ -538,7 +566,7 @@ footer {
   border: var(--border);
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.7);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
 }
 
 .admin-card-section {
@@ -565,7 +593,7 @@ footer {
   border: var(--border);
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.72);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
 }
 
 .admin-status-badge {
@@ -680,7 +708,7 @@ footer {
 .chat-card {
   background-color: var(--neutral-100);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
   border: var(--border);
 }
 
@@ -757,7 +785,7 @@ input[type="file"] {
   border: var(--border);
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.8);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
 }
 
 .users-table {
@@ -816,7 +844,7 @@ input[type="file"] {
 .mood-card {
   background: white;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
   padding: var(--space-24);
 }
 
@@ -867,7 +895,7 @@ input[type="file"] {
 .chat-card {
   background: var(--neutral-50);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
   padding: var(--space-24);
   display: flex;
   flex-direction: column;
@@ -2193,7 +2221,7 @@ input[type="file"] {
     color: white;
     cursor: pointer;
     z-index: 30;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   }
 
   .sidebar-mobile-close {
