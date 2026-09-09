@@ -5,6 +5,8 @@ import { Feather } from "@expo/vector-icons";
 import { COLORS, SIZES } from "@/constants/theme";
 import ThemedText from "@/components/ThemedText";
 import { authFetch } from "@/lib/api";
+import MapaEnergia from "@/components/MapaEnergia";
+import { obtenerHistorialAnimo, RegistroAnimo } from "@/lib/animo";
 
 type Respuesta = {
   nivel_actual: number | null;
@@ -37,6 +39,7 @@ function formatearFecha(iso: string): string {
 export default function MiBienestarScreen() {
   const [datos, setDatos] = useState<Respuesta | null>(null);
   const [loading, setLoading] = useState(true);
+  const [animoHistorial, setAnimoHistorial] = useState<RegistroAnimo[]>([]);
 
   useEffect(() => {
     authFetch("/api/estres/mio")
@@ -44,6 +47,8 @@ export default function MiBienestarScreen() {
       .then((data) => setDatos(data))
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    obtenerHistorialAnimo().then(setAnimoHistorial);
   }, []);
 
   if (loading) {
@@ -145,6 +150,18 @@ export default function MiBienestarScreen() {
             Se calcula analizando el tono general de tus conversaciones recientes con Jorima.
           </ThemedText>
         </View>
+
+        {animoHistorial.length > 0 && (
+          <View style={styles.card}>
+            <ThemedText variant="h3" style={{ marginBottom: 4 }}>
+              Tu mapa de energía
+            </ThemedText>
+            <ThemedText variant="bodySmall" color={COLORS.textSecondary} style={{ marginBottom: 12 }}>
+              Cada cuadro es un día. El color es como reportaste tu ánimo ese día.
+            </ThemedText>
+            <MapaEnergia registros={animoHistorial} />
+          </View>
+        )}
 
         <View style={styles.card}>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>

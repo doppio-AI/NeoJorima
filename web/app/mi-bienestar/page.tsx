@@ -7,6 +7,7 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 import MiniLineChart from "@/app/components/MiniLineChart";
+import MapaEnergia from "@/app/components/MapaEnergia";
 import Sidebar from "@/app/components/sidebar";
 
 type Respuesta = {
@@ -48,6 +49,7 @@ export default function MiBienestarPage() {
   const router = useRouter();
   const [datos, setDatos] = useState<Respuesta | null>(null);
   const [loading, setLoading] = useState(true);
+  const [animoHistorial, setAnimoHistorial] = useState<{ fecha: string; estado: string }[]>([]);
 
   useEffect(() => {
     if (!readCookie("usuario_public")) {
@@ -68,6 +70,13 @@ export default function MiBienestarPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    fetch("/api/animo/historial", { credentials: "same-origin", cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.registros)) setAnimoHistorial(data.registros);
+      })
+      .catch(() => {});
   }, [router]);
 
   const logout = async () => {
@@ -175,6 +184,17 @@ export default function MiBienestarPage() {
               <h3 style={{ marginTop: 0 }}>Últimos 30 días</h3>
               <MiniLineChart datos={datos.historico.map((h) => ({ fecha: h.fecha, promedio: h.valor }))} />
             </div>
+
+            {/* MAPA DE ENERGÍA */}
+            {animoHistorial.length > 0 && (
+              <div style={{ background: "white", border: "1px solid var(--neutral-200)", borderRadius: 12, padding: 20, marginBottom: 20 }}>
+                <h3 style={{ marginTop: 0 }}>Tu mapa de energía</h3>
+                <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--neutral-500)" }}>
+                  Cada cuadro es un día. El color es como reportaste tu ánimo ese día.
+                </p>
+                <MapaEnergia registros={animoHistorial} />
+              </div>
+            )}
 
             {/* ALERTAS */}
             <div style={{ background: "white", border: "1px solid var(--neutral-200)", borderRadius: 12, padding: 20, display: "flex", gap: 14, alignItems: "flex-start" }}>
