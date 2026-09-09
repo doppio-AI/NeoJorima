@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import confetti from "canvas-confetti";
 import JorimaAvatarWeb from "./JorimaAvatarWeb";
 
 const MENSAJES_GENERICOS = [
@@ -20,6 +21,7 @@ export default function MensajeMotivadorFinalWeb({ tipo, duracionSeg }: Props) {
   const router = useRouter();
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(true);
+  const [conteo, setConteo] = useState<number | null>(null);
 
   useEffect(() => {
     let activo = true;
@@ -45,6 +47,11 @@ export default function MensajeMotivadorFinalWeb({ tipo, duracionSeg }: Props) {
           ? dataPerfil.perfil_bienestar.nombres_dependientes
           : [];
 
+        // Se pide después de que el POST de arriba ya resolvió, para que
+        // el conteo incluya la sesión que se acaba de registrar.
+        const conteoRes = await fetch("/api/relajacion/conteo", { credentials: "same-origin" });
+        const dataConteo = await conteoRes.json().catch(() => ({}));
+
         if (!activo) return;
 
         if (nombres.length > 0) {
@@ -52,6 +59,13 @@ export default function MensajeMotivadorFinalWeb({ tipo, duracionSeg }: Props) {
           setMensaje(`Te tomaste este momento para ti. Eso también es cuidar de ${persona}.`);
         } else {
           setMensaje(MENSAJES_GENERICOS[Math.floor(Math.random() * MENSAJES_GENERICOS.length)]);
+        }
+        if (typeof dataConteo?.total === "number") setConteo(dataConteo.total);
+
+        // Celebración sin castigo (bloque 11): confeti solo al completar,
+        // nunca hay un camino de "fallar" desde el que dispararlo.
+        if (!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+          confetti({ particleCount: 100, spread: 80, origin: { y: 0.4 } });
         }
       } catch (e) {
         if (activo) setMensaje(MENSAJES_GENERICOS[0]);
@@ -65,6 +79,7 @@ export default function MensajeMotivadorFinalWeb({ tipo, duracionSeg }: Props) {
     return () => {
       activo = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tipo, duracionSeg]);
 
   return (
@@ -85,7 +100,24 @@ export default function MensajeMotivadorFinalWeb({ tipo, duracionSeg }: Props) {
       {cargando ? (
         <p style={{ color: "var(--neutral-500)" }}>Un momento...</p>
       ) : (
-        <h2 style={{ maxWidth: 420 }}>{mensaje}</h2>
+        <>
+          <h2 style={{ maxWidth: 420 }}>{mensaje}</h2>
+
+          {!!conteo && conteo > 0 && (
+            <div
+              style={{
+                background: "white",
+                border: "2px solid var(--c-border, #E1E6EA)",
+                borderRadius: 999,
+                padding: "6px 14px",
+                fontSize: 13,
+                color: "var(--neutral-500)",
+              }}
+            >
+              🌿 {conteo} {conteo === 1 ? "pausa activa" : "pausas activas"} desde que empezaste
+            </div>
+          )}
+        </>
       )}
 
       <button

@@ -23,9 +23,12 @@ const DEPTH = 4;
 interface Props extends Omit<PressableProps, "style"> {
   style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
+  // Color del borde inferior (la "profundidad"). Por defecto es neutro;
+  // el catálogo de relajación, por ejemplo, lo pinta de lavanda.
+  acento?: string;
 }
 
-export default function PressableCard({ children, style, onPressIn, onPressOut, ...rest }: Props) {
+export default function PressableCard({ children, style, acento, onPressIn, onPressOut, ...rest }: Props) {
   const [pressed, setPressed] = useState(false);
 
   const handlePressIn = (e: GestureResponderEvent) => {
@@ -45,6 +48,7 @@ export default function PressableCard({ children, style, onPressIn, onPressOut, 
           styles.card,
           {
             borderBottomWidth: pressed ? 0 : DEPTH,
+            borderBottomColor: acento ?? COLORS.borderStrong,
             marginTop: pressed ? DEPTH : 0,
           },
           style,

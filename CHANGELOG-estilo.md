@@ -111,3 +111,21 @@ Registro por bloque, según `jorima-estilo-duolingo.md`. Una línea (o unas cuan
 - El sonido opcional con toggle en Perfil. El documento lo marca explícitamente como opcional, y no existe ningún asset de sonido ni configuración de audio en el proyecto — agregar un toggle sin un sonido real detrás habría sido una pieza de UI que no hace nada, más confusa que útil.
 
 **Verificado:** `tsc` limpio en ambos proyectos (mismos 3 errores preexistentes de siempre en móvil, ninguno nuevo; 0 en web). Captura de `/usuarios` confirmando que el avatar web sigue renderizando bien tras el refactor del hook, sin errores de consola. El háptico y el pop del contador en móvil se revisaron por lectura de código — no hay dispositivo físico ni emulador en este entorno para sentir la vibración o ver la animación en vivo.
+
+---
+
+## Bloque 12 — Pausas activas como "lección" (bloques 9–11 saltados, ver nota)
+
+**Qué cambió:**
+- Nuevo `GET /api/relajacion/conteo`: cuenta total de `sesion_relajacion` completadas del usuario, para siempre — el contador acumulativo que pide el bloque 11 ("23 pausas activas desde que empezaste"), tomado de una tabla que ya existía, sin tocar el esquema.
+- `MensajeMotivadorFinal.tsx` (móvil, con `react-native-confetti-cannon`) y `MensajeMotivadorFinalWeb.tsx` (web, con `canvas-confetti`): confeti al completar una pausa activa, mostrando también el contador de arriba. El confeti respeta reduce-motion/`prefers-reduced-motion` y solo existe en el camino de éxito — no hay ningún camino de "fallar" desde el que se pueda disparar, tal como pide el bloque 11 ("celebración sin castigo").
+- `respiracion.tsx` y `estiramiento.tsx` (ambas plataformas): `ProgressBar` (bloque 7) arriba mostrando el avance real de la sesión, en `lavanda`. La "X" de salir ahora solo pide confirmación si el progreso pasa de la mitad — antes de eso, sale directo. Verificado con un caso por umbral: paso 1 (progreso 0) sale directo, paso 3 de 4 (progreso exactamente 0.5) sale directo, paso 4 de 4 (progreso 0.75) sí pide confirmar, y cancelar deja a la persona en la misma pantalla.
+- Catálogo de relajación (`(relajacion)/index.tsx` en móvil, `relajacion/page.tsx` en web): tarjetas presionables con la anatomía del bloque 4, ahora en `lavanda` (nuevo prop `acento` en `PressableCard`). `burbujas.tsx` y `memorama.tsx` se dejaron sin tocar — son minijuegos interactivos, no una secuencia de instrucciones, y forzarlos a la estructura de "lección" habría significado reescribir su lógica de juego, no solo su presentación.
+
+**Bug encontrado y corregido (del bloque 7, no de este):** `ProgressBar` en web nunca tenía ancho explícito — funcionaba por accidente en `mi-bienestar` porque ahí vive dentro de un contenedor de bloque normal (que estira a los hijos al 100% por defecto), pero se rompía (ancho 0, invisible) en cualquier contenedor `flex` como el que usa `respiracion`/`estiramiento`. Se le agregó `width: "100%"` explícito.
+
+**Por qué se saltaron los bloques 9, 10 y 11 para llegar directo al 12:**
+- El bloque 12 depende del 11 (contador acumulativo, celebración) y del 10 (trigger `celebrar` de una mascota animada) — ninguno de los dos existía. Se sustituyó el trigger de celebración por confeti + el mood `sonrisa_amplia` que ya existe (no hay un estado `celebracion` real todavía, eso es del bloque 9).
+- El resto del bloque 11 (tabla de logros por hitos absolutos, resumen semanal) no se implementó — es una pieza de producto más grande, con su propio modelo de datos, que amerita su propia sesión de trabajo, no un efecto colateral de meter las pausas activas.
+
+**Verificado en vivo (web):** capturas del catálogo (bordes lavanda), el paso 1 de estiramiento (barra en 0), el paso 4 (barra al 75% en lavanda), y la pantalla de cierre con confeti cayendo, la mascota sonriendo y "6 pausas activas desde que empezaste". Las tres pruebas de umbral de la confirmación de salida (antes, en el punto medio exacto, y pasado el medio) dieron el resultado esperado. Sin errores de consola. `tsc` limpio en ambos proyectos. Móvil revisado por tipos y lectura de código (sin emulador en este entorno).

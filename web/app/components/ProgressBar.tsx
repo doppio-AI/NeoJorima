@@ -17,7 +17,7 @@ export default function ProgressBar({ value, color = "var(--c-secondary)", label
   const acotado = Math.max(0, Math.min(1, value));
 
   return (
-    <div>
+    <div style={{ width: "100%" }}>
       {label && (
         <p style={{ margin: "0 0 6px", fontSize: 12, color: "var(--neutral-500)" }}>{label}</p>
       )}
@@ -27,6 +27,7 @@ export default function ProgressBar({ value, color = "var(--c-secondary)", label
         aria-valuemax={100}
         aria-valuenow={Math.round(acotado * 100)}
         style={{
+          width: "100%",
           height: 16,
           borderRadius: 999,
           background: "var(--c-border)",

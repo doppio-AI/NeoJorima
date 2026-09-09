@@ -76,7 +76,12 @@ export default function RelajacionPickerScreen() {
         ) : (
           <View style={styles.grid}>
             {catalogo.map((actividad) => (
-              <PressableCard key={actividad.id} onPress={() => irA(actividad)} style={{ gap: 6, padding: 16 }}>
+              <PressableCard
+                key={actividad.id}
+                onPress={() => irA(actividad)}
+                acento={COLORS.lavandaShadow}
+                style={{ gap: 6, padding: 16 }}
+              >
                 <Feather
                   name={ICONO_POR_TIPO[actividad.tipo] ?? "circle"}
                   size={24}

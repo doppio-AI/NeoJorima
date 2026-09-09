@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiX } from "react-icons/fi";
 import MensajeMotivadorFinalWeb from "@/app/components/MensajeMotivadorFinalWeb";
+import ProgressBar from "@/app/components/ProgressBar";
 
 const CICLOS = 4;
 const FASES = [
@@ -51,11 +52,26 @@ export default function RespiracionPage() {
     return <MensajeMotivadorFinalWeb tipo="respiracion" duracionSeg={duracionSeg} />;
   }
 
+  const progreso = ((ciclo - 1) * FASES.length + faseIndex) / (CICLOS * FASES.length);
+
+  // Bloque 12: solo pide confirmación pasado el punto medio — antes de
+  // eso, sale directo, sin atrapar a quien quiere irse.
+  const salir = () => {
+    if (progreso > 0.5 && !window.confirm("Vas a la mitad. ¿Seguro que quieres salir? Puedes volver cuando quieras, no se pierde nada.")) {
+      return;
+    }
+    router.push("/usuarios");
+  };
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, position: "relative" }}>
+      <div style={{ position: "absolute", top: 24, left: 24, right: 64, display: "flex", alignItems: "center" }}>
+        <ProgressBar value={progreso} color="var(--c-lavanda)" />
+      </div>
+
       <button
-        onClick={() => router.push("/usuarios")}
-        style={{ position: "absolute", top: 24, right: 24, background: "none", border: "none", cursor: "pointer", color: "var(--neutral-500)" }}
+        onClick={salir}
+        style={{ position: "absolute", top: 20, right: 24, background: "none", border: "none", cursor: "pointer", color: "var(--neutral-500)" }}
       >
         <FiX size={24} />
       </button>

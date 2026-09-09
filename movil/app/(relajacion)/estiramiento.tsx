@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { SafeAreaView, StyleSheet, View, TouchableOpacity } from "react-native";
+import { SafeAreaView, StyleSheet, View, TouchableOpacity, Alert } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -8,6 +8,7 @@ import { COLORS, SIZES } from "@/constants/theme";
 import ThemedText from "@/components/ThemedText";
 import ThemedButton from "@/components/ThemedButton";
 import MensajeMotivadorFinal from "@/components/MensajeMotivadorFinal";
+import ProgressBar from "@/components/ProgressBar";
 
 const PASOS = [
   {
@@ -77,15 +78,34 @@ export default function EstiramientoScreen() {
   }
 
   const paso = PASOS[pasoIndex];
+  const progreso = pasoIndex / PASOS.length;
+
+  // Bloque 12: solo pide confirmación pasado el punto medio.
+  const salir = () => {
+    if (progreso > 0.5) {
+      Alert.alert(
+        "¿Salir del estiramiento?",
+        "Vas a la mitad. Puedes volver cuando quieras, no se pierde nada.",
+        [
+          { text: "Seguir aquí", style: "cancel" },
+          { text: "Salir", style: "destructive", onPress: () => router.replace("/(tabs)/home") },
+        ]
+      );
+    } else {
+      router.replace("/(tabs)/home");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity
-        style={styles.closeButton}
-        onPress={() => router.replace("/(tabs)/home")}
-      >
-        <Feather name="x" size={22} color={COLORS.textSecondary} />
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.closeButton} onPress={salir}>
+          <Feather name="x" size={22} color={COLORS.textSecondary} />
+        </TouchableOpacity>
+        <View style={styles.progressWrapper}>
+          <ProgressBar value={progreso} color={COLORS.lavanda} />
+        </View>
+      </View>
 
       <View style={styles.content}>
         <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
@@ -113,7 +133,15 @@ export default function EstiramientoScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  closeButton: { position: "absolute", top: 50, right: 20, zIndex: 10 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingTop: 50,
+    paddingHorizontal: 20,
+  },
+  closeButton: {},
+  progressWrapper: { flex: 1 },
   content: {
     flex: 1,
     justifyContent: "center",

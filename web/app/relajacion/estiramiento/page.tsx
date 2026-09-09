@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiX } from "react-icons/fi";
 import MensajeMotivadorFinalWeb from "@/app/components/MensajeMotivadorFinalWeb";
+import ProgressBar from "@/app/components/ProgressBar";
 
 const PASOS = [
   { titulo: "Estira el cuello", descripcion: "Inclina la cabeza suavemente hacia un hombro, sostén, y cambia de lado.", segundos: 20 },
@@ -54,12 +55,25 @@ export default function EstiramientoPage() {
   }
 
   const paso = PASOS[pasoIndex];
+  const progreso = pasoIndex / PASOS.length;
+
+  // Bloque 12: solo pide confirmación pasado el punto medio.
+  const salir = () => {
+    if (progreso > 0.5 && !window.confirm("Vas a la mitad. ¿Seguro que quieres salir? Puedes volver cuando quieras, no se pierde nada.")) {
+      return;
+    }
+    router.push("/usuarios");
+  };
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, position: "relative", padding: 24 }}>
+      <div style={{ position: "absolute", top: 24, left: 24, right: 64, display: "flex", alignItems: "center" }}>
+        <ProgressBar value={progreso} color="var(--c-lavanda)" />
+      </div>
+
       <button
-        onClick={() => router.push("/usuarios")}
-        style={{ position: "absolute", top: 24, right: 24, background: "none", border: "none", cursor: "pointer", color: "var(--neutral-500)" }}
+        onClick={salir}
+        style={{ position: "absolute", top: 20, right: 24, background: "none", border: "none", cursor: "pointer", color: "var(--neutral-500)" }}
       >
         <FiX size={24} />
       </button>

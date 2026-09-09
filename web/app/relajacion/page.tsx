@@ -93,15 +93,19 @@ export default function RelajacionPickerPage() {
             <div
               key={actividad.id}
               onClick={() => irA(actividad)}
+              className="jorima-pressable-card"
               style={{
-                border: "1px solid var(--neutral-200)",
-                borderRadius: 12,
+                border: "var(--border-w) solid var(--c-border)",
+                borderBottomWidth: 4,
+                borderBottomColor: "var(--c-lavanda-shadow)",
+                borderRadius: "var(--radius-lg)",
                 padding: 18,
                 cursor: "pointer",
                 display: "flex",
                 gap: 14,
                 alignItems: "flex-start",
                 background: "white",
+                transition: "transform 80ms ease, border-bottom-width 80ms ease, margin-top 80ms ease",
               }}
             >
               <div style={{ color: "#0F4C81" }}>{ICONO_POR_TIPO[actividad.tipo] ?? <FiCircle />}</div>
@@ -115,6 +119,16 @@ export default function RelajacionPickerPage() {
           ))}
         </div>
       )}
+
+      <style>{`
+        .jorima-pressable-card:active {
+          border-bottom-width: 0 !important;
+          margin-top: 4px !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .jorima-pressable-card { transition: none !important; }
+        }
+      `}</style>
     </div>
   );
 }

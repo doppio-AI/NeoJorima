@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { SafeAreaView, StyleSheet, View, Animated, TouchableOpacity } from "react-native";
+import { SafeAreaView, StyleSheet, View, Animated, TouchableOpacity, Alert } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -7,6 +7,7 @@ import * as Haptics from "expo-haptics";
 import { COLORS, SIZES } from "@/constants/theme";
 import ThemedText from "@/components/ThemedText";
 import MensajeMotivadorFinal from "@/components/MensajeMotivadorFinal";
+import ProgressBar from "@/components/ProgressBar";
 
 const CICLOS = 4;
 const FASES = [
@@ -63,14 +64,35 @@ export default function RespiracionScreen() {
     return <MensajeMotivadorFinal tipo="respiracion" duracionSeg={duracionSeg} completada />;
   }
 
+  const progreso = ((ciclo - 1) * FASES.length + faseIndex) / (CICLOS * FASES.length);
+
+  // Bloque 12: salir a la mitad no pide confirmación — solo se pregunta
+  // pasado el punto medio, para no atrapar a alguien que quiere irse.
+  const salir = () => {
+    if (progreso > 0.5) {
+      Alert.alert(
+        "¿Salir de la respiración?",
+        "Vas a la mitad. Puedes volver cuando quieras, no se pierde nada.",
+        [
+          { text: "Seguir aquí", style: "cancel" },
+          { text: "Salir", style: "destructive", onPress: () => router.replace("/(tabs)/home") },
+        ]
+      );
+    } else {
+      router.replace("/(tabs)/home");
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity
-        style={styles.closeButton}
-        onPress={() => router.replace("/(tabs)/home")}
-      >
-        <Feather name="x" size={22} color={COLORS.textSecondary} />
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.closeButton} onPress={salir}>
+          <Feather name="x" size={22} color={COLORS.textSecondary} />
+        </TouchableOpacity>
+        <View style={styles.progressWrapper}>
+          <ProgressBar value={progreso} color={COLORS.lavanda} />
+        </View>
+      </View>
 
       <View style={styles.content}>
         <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
@@ -95,7 +117,15 @@ export default function RespiracionScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  closeButton: { position: "absolute", top: 50, right: 20, zIndex: 10 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingTop: 50,
+    paddingHorizontal: 20,
+  },
+  closeButton: {},
+  progressWrapper: { flex: 1 },
   content: {
     flex: 1,
     justifyContent: "center",
