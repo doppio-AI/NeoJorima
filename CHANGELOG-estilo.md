@@ -59,3 +59,13 @@ Registro por bloque, según `jorima-estilo-duolingo.md`. Una línea (o unas cuan
 - `.registro-group` y `.codigo-input` no estaban en la lista de archivos del documento, pero tenían exactamente el mismo halo de foco que `.form-group` — se corrigieron también por consistencia (dejarlos con el halo viejo mientras el resto de la app usa el outline nuevo se habría visto como un descuido, no una decisión).
 
 **Verificado:** capturas de `/usuarios` (tarjeta de chat con el borde y radio nuevos), `/historial` (tarjeta de conversación) y el input de correo de `/login` enfocado (outline limpio de 2px, sin halo difuso). Sin errores de consola. `tsc` limpio en ambos proyectos (solo los 4 errores preexistentes de siempre, ninguno nuevo). Móvil revisado por tipos/lectura de código.
+
+---
+
+## Bloque 5 — Vitrina de componentes
+
+**Qué cambió (solo móvil, este bloque no tiene lado web):**
+- `movil/app/design-system.tsx` reescrito por completo: paleta como swatches (nombre + hex, la tabla del bloque 1), las 7 variantes tipográficas (incluida `button`, que no es una variante de `ThemedText` — se muestra aplicando `FONTS.button` directo), los 4 tipos de botón en normal/cargando/deshabilitado, inputs vacío/con texto/enfocable, una tarjeta estática y una `PressableCard`, chips, y `JorimaAvatar` en sus 5 moods más `talking`.
+- `movil/app/(tabs)/perfil.tsx`: nuevo botón "Vitrina de diseño (dev)" (variante `lavanda`), visible solo si `__DEV__`, que navega a `/design-system`.
+
+**Verificado:** por tipos (`tsc` limpio, mismos 3 errores preexistentes de siempre) y lectura de código — no hay emulador en este entorno para capturarla en vivo, pero la pantalla no depende de red ni de sesión, así que un `expo start` debería mostrarla completa de inmediato.

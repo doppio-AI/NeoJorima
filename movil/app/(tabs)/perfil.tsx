@@ -133,6 +133,17 @@ export default function PerfilScreen() {
           </View>
         </View>
 
+        {/* Vitrina de componentes — solo en desarrollo */}
+        {__DEV__ && (
+          <View style={styles.logoutContainer}>
+            <ThemedButton
+              title="Vitrina de diseño (dev)"
+              variant="lavanda"
+              onPress={() => router.push("/design-system")}
+            />
+          </View>
+        )}
+
         {/* Botón logout */}
         <View style={styles.logoutContainer}>
           <ThemedButton
