@@ -30,3 +30,15 @@ Registro por bloque, según `jorima-estilo-duolingo.md`. Una línea (o unas cuan
 - Verificado visualmente con capturas de `/`, `/login`, `/usuarios` y `/historial`: las cuatro ahora resuelven `font-family` a Nunito con sus fallbacks correctos, sin errores de consola.
 
 **Pendiente:** nada específico de este bloque. El bug de fuente encontrado quedó resuelto de raíz, no parcheado.
+
+---
+
+## Bloque 3 — El botón chunky
+
+**Qué cambió:**
+- `movil/components/ThemedButton.tsx`: reescrito manteniendo la API pública (`title`, `variant`, `loading`, `onPress`, `disabled`). Contenedor externo (`Pressable`) que reserva `56 + 4px` de alto; la caja visual interna hunde su `borderBottomWidth` a 0 y baja `marginTop: 4` al presionar. Nueva variante `lavanda`. Estado deshabilitado sin opacidad (fondo `#E1E6EA`, texto `#9AA6AE`), tal como pide el documento.
+- `web/app/globals.css`: `.btn-primary` reescrito con la anatomía de borde sólido (`border-bottom: 4px`, se hunde con `translateY(4px)` al `:active`). Nuevas `.btn-secondary` (azul) y `.btn-lavanda`, misma anatomía. Ninguna las usaba todavía, así que no hay riesgo de romper algo existente.
+
+**De paso:** se corrigió un error de tipos preexistente en `ThemedButton.tsx` (el tipo de `style` heredado de `PressableProps` admite una forma de función que este componente nunca produce; se angostó la interfaz para aceptar solo `StyleProp<ViewStyle>`). Estaba ahí desde antes, solo cambió de línea al reescribir el archivo — se aprovechó para resolverlo de una vez.
+
+**Verificado:** capturas del botón "Entrar" en `/login` en reposo y mientras se mantiene presionado con el mouse — el borde inferior desaparece y el botón baja 4px, sin saltos de layout. Sin errores de consola. El lado móvil se revisó por tipos y lectura de código (no hay emulador disponible en este entorno para capturarlo en vivo).
