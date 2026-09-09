@@ -7,6 +7,9 @@ import ThemedText from "@/components/ThemedText";
 import { authFetch } from "@/lib/api";
 import MapaEnergia from "@/components/MapaEnergia";
 import { obtenerHistorialAnimo, RegistroAnimo } from "@/lib/animo";
+import StressRing, { colorPorNivel } from "@/components/StressRing";
+import ProgressBar from "@/components/ProgressBar";
+import JorimaAvatar, { JorimaMood } from "@/components/JorimaAvatar";
 
 type Respuesta = {
   nivel_actual: number | null;
@@ -22,10 +25,10 @@ type Respuesta = {
   };
 };
 
-function colorNivel(valor: number): string {
-  if (valor <= 33) return "#16A34A";
-  if (valor <= 66) return "#F59E0B";
-  return "#DC2626";
+function moodPorNivel(valor: number): JorimaMood {
+  if (valor <= 33) return "sonrisa_amplia";
+  if (valor <= 66) return "sereno2";
+  return "preocupacion";
 }
 
 function formatearFecha(iso: string): string {
@@ -85,14 +88,15 @@ export default function MiBienestarScreen() {
 
         <View style={styles.card}>
           <View style={styles.nivelRow}>
-            <View style={[styles.nivelCircle, { borderColor: colorNivel(nivel) }]}>
-              <ThemedText variant="h1" color={colorNivel(nivel)}>
-                {nivel}
-              </ThemedText>
-            </View>
+            <StressRing valor={nivel} size={104}>
+              <JorimaAvatar mood={moodPorNivel(nivel)} size={60} />
+            </StressRing>
             <View style={{ flex: 1 }}>
               <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
                 Tu nivel de estrés actual
+              </ThemedText>
+              <ThemedText variant="h1" color={colorPorNivel(nivel)} style={{ marginTop: 2 }}>
+                {nivel}
               </ThemedText>
               <ThemedText variant="body" style={{ marginTop: 4 }}>
                 {nivel <= 33
@@ -115,6 +119,12 @@ export default function MiBienestarScreen() {
             Ánimo
           </ThemedText>
           <ThemedText variant="h3">{datos.factores?.animo ?? "—"}</ThemedText>
+          {datos.factores && (
+            <ProgressBar
+              value={datos.factores.animo / 100}
+              color={colorPorNivel(datos.factores.animo)}
+            />
+          )}
           <ThemedText variant="bodySmall" color={COLORS.textSecondary} style={{ marginTop: 4 }}>
             Se calcula con cómo dijiste sentirte en el quiz diario.
           </ThemedText>
@@ -130,6 +140,12 @@ export default function MiBienestarScreen() {
             Carga de tareas
           </ThemedText>
           <ThemedText variant="h3">{datos.factores?.carga ?? "—"}</ThemedText>
+          {datos.factores && (
+            <ProgressBar
+              value={datos.factores.carga / 100}
+              color={colorPorNivel(datos.factores.carga)}
+            />
+          )}
           <ThemedText variant="bodySmall" color={COLORS.textSecondary} style={{ marginTop: 4 }}>
             Se calcula con tus tareas pendientes y tu carga diaria reportada.
           </ThemedText>
@@ -146,6 +162,12 @@ export default function MiBienestarScreen() {
             Señales del chat
           </ThemedText>
           <ThemedText variant="h3">{datos.factores?.chat ?? "—"}</ThemedText>
+          {datos.factores && (
+            <ProgressBar
+              value={datos.factores.chat / 100}
+              color={colorPorNivel(datos.factores.chat)}
+            />
+          )}
           <ThemedText variant="bodySmall" color={COLORS.textSecondary} style={{ marginTop: 4 }}>
             Se calcula analizando el tono general de tus conversaciones recientes con Jorima.
           </ThemedText>
@@ -218,13 +240,5 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   nivelRow: { flexDirection: "row", gap: 16, alignItems: "center" },
-  nivelCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 5,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   labelUpper: { textTransform: "uppercase", letterSpacing: 0.5 },
 });

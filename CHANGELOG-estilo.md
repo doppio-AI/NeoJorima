@@ -79,3 +79,19 @@ Registro por bloque, según `jorima-estilo-duolingo.md`. Una línea (o unas cuan
 - `movil/components/haptic-tab.tsx`: existía sin usarse desde el scaffold original de Expo. Se activó como `tabBarButton` y se cambió de `impactAsync` (solo iOS) a `Haptics.selectionAsync()` en ambas plataformas — es el tipo de háptico pensado para elegir entre opciones del mismo grupo, que es exactamente lo que es un tab bar.
 
 **Verificado:** `tsc` limpio (mismos 3 errores preexistentes, ninguno nuevo). Sin emulador/dispositivo físico en este entorno para confirmar el háptico o ver la pastilla en vivo — revisado por lectura de código contra la documentación de Expo Router (`tabBarIcon` recibe `focused`, `tabBarButton` acepta un componente).
+
+---
+
+## Bloque 7 — Barras y anillos de progreso
+
+**Qué cambió:**
+- `movil/components/ProgressBar.tsx` (nuevo): barra gruesa, radio `full`, brillo blanco al 30% en el tercio superior de la porción llena. Anima con `react-native-reanimated` (`withTiming`, 400ms, ease-out) solo cuando `value` cambia de verdad, no en cada re-render; si `AccessibilityInfo.isReduceMotionEnabled()` es true, aparece directo. Instalado `react-native-svg` (no estaba).
+- `movil/components/StressRing.tsx` (nuevo): anillo SVG, grosor 14, extremos redondeados, mismo criterio de animación/reduce-motion que la barra. Color por rango usando los acentos del bloque 1 (`success` bajo, `sol` medio, `coral` alto) — nunca los semánticos `warning`/`error`, que suenan a falla. Exporta `colorPorNivel` para que la pantalla que lo usa pinte el número del mismo color sin acoplarse al componente.
+- `web/app/components/ProgressBar.tsx` y `StressRing.tsx` (nuevos): misma anatomía, animados con CSS puro (`transition: width`/`stroke-dashoffset`, apagada con `prefers-reduced-motion`) en vez de una librería — no había ninguna instalada y no hacía falta.
+- Ambos se conectaron donde el dato **ya se estaba pidiendo** — `movil/(tabs)/estres.tsx` y `web/mi-bienestar/page.tsx` — reemplazando el círculo con borde a mano por el anillo (con la mascota adentro) y agregando una `ProgressBar` a cada una de las tres tarjetas de factor (ánimo, carga, chat). No se agregó ningún `fetch` nuevo: la regla del documento de no tocar la lógica de negocio se cumple usando datos que esas pantallas ya cargaban.
+
+**Qué no se hizo igual que el doc, y por qué:**
+- El documento sugiere usar el anillo "como encabezado de `(tabs)/home.tsx`, reemplazando el saludo plano" — pero `home.tsx` no pide el nivel de estrés (eso vive en `estres.tsx`/`mi-bienestar`), y agregar ese `fetch` ahí habría violado la regla explícita del propio documento de no tocar `los fetch de las pantallas`. Se usó la pantalla que ya tenía el dato en vez de la que el documento nombró.
+- El documento también sugiere `ProgressBar` en `web/app/historial/page.tsx` — esa pantalla no tiene ninguna métrica 0–1 que mostrar (es una lista de conversaciones), así que se usó en `mi-bienestar` en su lugar, que sí tiene tres métricas de 0 a 100 ya calculadas.
+
+**Verificado:** captura de `/mi-bienestar` con el anillo verde (nivel 25) con la mascota adentro, y las tres barras de progreso con su color y brillo correctos, una de ellas vacía (nivel 0) mostrando la pista sin relleno. Sin errores de consola. `tsc` limpio en ambos proyectos.

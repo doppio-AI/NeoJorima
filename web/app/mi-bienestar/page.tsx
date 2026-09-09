@@ -8,6 +8,9 @@ import {
 } from "react-icons/fi";
 import MiniLineChart from "@/app/components/MiniLineChart";
 import MapaEnergia from "@/app/components/MapaEnergia";
+import StressRing, { colorPorNivel } from "@/app/components/StressRing";
+import ProgressBar from "@/app/components/ProgressBar";
+import JorimaAvatarWeb from "@/app/components/JorimaAvatarWeb";
 import Sidebar from "@/app/components/sidebar";
 
 type Respuesta = {
@@ -31,10 +34,10 @@ function readCookie(name: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-function colorNivel(valor: number): string {
-  if (valor <= 33) return "#16A34A";
-  if (valor <= 66) return "#F59E0B";
-  return "#DC2626";
+function moodPorNivel(valor: number): "sonrisa_amplia" | "sereno2" | "preocupacion" {
+  if (valor <= 33) return "sonrisa_amplia";
+  if (valor <= 66) return "sereno2";
+  return "preocupacion";
 }
 
 function formatearFecha(iso: string): string {
@@ -108,25 +111,14 @@ export default function MiBienestarPage() {
         ) : (
           <>
             <div style={{ background: "white", border: "1px solid var(--neutral-200)", borderRadius: 12, padding: 24, marginBottom: 20, display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
-              <div
-                style={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: "50%",
-                  border: `6px solid ${colorNivel(datos.nivel_actual)}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 26,
-                  fontWeight: 700,
-                  color: colorNivel(datos.nivel_actual),
-                  flexShrink: 0,
-                }}
-              >
-                {datos.nivel_actual}
-              </div>
+              <StressRing valor={datos.nivel_actual} size={104}>
+                <JorimaAvatarWeb mood={moodPorNivel(datos.nivel_actual)} size={60} />
+              </StressRing>
               <div>
                 <p style={{ margin: 0, fontSize: 13, color: "var(--neutral-500)" }}>Tu nivel de estrés actual</p>
+                <p style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 700, color: colorPorNivel(datos.nivel_actual) }}>
+                  {datos.nivel_actual}
+                </p>
                 <p style={{ margin: "2px 0 0", fontSize: 14, color: "var(--neutral-600)" }}>
                   {datos.nivel_actual <= 33
                     ? "Va bien — sigue así."
@@ -147,6 +139,11 @@ export default function MiBienestarPage() {
               <div style={{ background: "white", border: "1px solid var(--neutral-200)", borderRadius: 12, padding: 18 }}>
                 <p style={{ margin: "0 0 6px", fontSize: 12, color: "var(--neutral-500)", textTransform: "uppercase" }}>Ánimo</p>
                 <p style={{ margin: "0 0 8px", fontSize: 22, fontWeight: 700 }}>{datos.factores?.animo ?? "—"}</p>
+                {datos.factores && (
+                  <div style={{ marginBottom: 8 }}>
+                    <ProgressBar value={datos.factores.animo / 100} color={colorPorNivel(datos.factores.animo)} />
+                  </div>
+                )}
                 <p style={{ margin: 0, fontSize: 13, color: "var(--neutral-600)" }}>
                   Se calcula con cómo dijiste sentirte en el quiz diario.
                 </p>
@@ -160,6 +157,11 @@ export default function MiBienestarPage() {
               <div style={{ background: "white", border: "1px solid var(--neutral-200)", borderRadius: 12, padding: 18 }}>
                 <p style={{ margin: "0 0 6px", fontSize: 12, color: "var(--neutral-500)", textTransform: "uppercase" }}>Carga de tareas</p>
                 <p style={{ margin: "0 0 8px", fontSize: 22, fontWeight: 700 }}>{datos.factores?.carga ?? "—"}</p>
+                {datos.factores && (
+                  <div style={{ marginBottom: 8 }}>
+                    <ProgressBar value={datos.factores.carga / 100} color={colorPorNivel(datos.factores.carga)} />
+                  </div>
+                )}
                 <p style={{ margin: 0, fontSize: 13, color: "var(--neutral-600)" }}>
                   Se calcula con tus tareas pendientes y tu carga diaria reportada.
                 </p>
@@ -173,6 +175,11 @@ export default function MiBienestarPage() {
               <div style={{ background: "white", border: "1px solid var(--neutral-200)", borderRadius: 12, padding: 18 }}>
                 <p style={{ margin: "0 0 6px", fontSize: 12, color: "var(--neutral-500)", textTransform: "uppercase" }}>Señales del chat</p>
                 <p style={{ margin: "0 0 8px", fontSize: 22, fontWeight: 700 }}>{datos.factores?.chat ?? "—"}</p>
+                {datos.factores && (
+                  <div style={{ marginBottom: 8 }}>
+                    <ProgressBar value={datos.factores.chat / 100} color={colorPorNivel(datos.factores.chat)} />
+                  </div>
+                )}
                 <p style={{ margin: 0, fontSize: 13, color: "var(--neutral-600)" }}>
                   Se calcula analizando el tono general de tus conversaciones recientes con Jorima.
                 </p>
