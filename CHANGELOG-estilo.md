@@ -95,3 +95,19 @@ Registro por bloque, según `jorima-estilo-duolingo.md`. Una línea (o unas cuan
 - El documento también sugiere `ProgressBar` en `web/app/historial/page.tsx` — esa pantalla no tiene ninguna métrica 0–1 que mostrar (es una lista de conversaciones), así que se usó en `mi-bienestar` en su lugar, que sí tiene tres métricas de 0 a 100 ya calculadas.
 
 **Verificado:** captura de `/mi-bienestar` con el anillo verde (nivel 25) con la mascota adentro, y las tres barras de progreso con su color y brillo correctos, una de ellas vacía (nivel 0) mostrando la pista sin relleno. Sin errores de consola. `tsc` limpio en ambos proyectos.
+
+---
+
+## Bloque 8 — Micro-feedback
+
+**Qué cambió:**
+- `movil/hooks/usePopAnimation.ts` (nuevo): extrae el patrón que vivía a mano dentro de `JorimaAvatar.tsx` (escala a 1.14, resorte de vuelta a 1) a un hook reutilizable — devuelve `{ escala, dispara }`. Respeta `AccessibilityInfo.isReduceMotionEnabled()`: si está activo, `dispara()` no hace nada.
+- `web/app/hooks/usePopAnimation.ts` (nuevo): mismo hook, versión web — usa CSS (`transform`/`transition`) en vez de `Animated`, porque no hay runtime de React Native en el navegador. Misma curva (escala 1.14, mismo cubic-bezier tipo resorte que ya tenía `JorimaAvatarWeb`, solo ajustado de 1.12 a 1.14 para que coincida exacto con móvil). Respeta `prefers-reduced-motion`.
+- `JorimaAvatar.tsx` y `JorimaAvatarWeb.tsx` migrados a su hook respectivo — ya no tienen la animación de pop escrita a mano.
+- `movil/components/ThemedButton.tsx`: `Haptics.impactAsync(Light)` en `onPressIn`.
+- `movil/app/(tabs)/home.tsx`: `Haptics.notificationAsync(Success)` al guardar ánimo/intención/carga con éxito (completar una pausa activa ya lo tenía, en `MensajeMotivadorFinal.tsx`, desde antes de este bloque). Nuevo `MoodOptionButton` — la opción de ánimo hace "pop" al seleccionarse, usando el mismo hook. El contador de tareas (+/-) también hace "pop" al cambiar, pero no en el montaje inicial (se guarda con un `ref` para no disparar nada sin que el usuario haya tocado algo).
+
+**Qué no se hizo:**
+- El sonido opcional con toggle en Perfil. El documento lo marca explícitamente como opcional, y no existe ningún asset de sonido ni configuración de audio en el proyecto — agregar un toggle sin un sonido real detrás habría sido una pieza de UI que no hace nada, más confusa que útil.
+
+**Verificado:** `tsc` limpio en ambos proyectos (mismos 3 errores preexistentes de siempre en móvil, ninguno nuevo; 0 en web). Captura de `/usuarios` confirmando que el avatar web sigue renderizando bien tras el refactor del hook, sin errores de consola. El háptico y el pop del contador en móvil se revisaron por lectura de código — no hay dispositivo físico ni emulador en este entorno para sentir la vibración o ver la animación en vivo.

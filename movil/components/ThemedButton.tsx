@@ -10,6 +10,7 @@ import {
   StyleProp,
   ViewStyle,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import { COLORS, SIZES, FONTS } from "@/constants/theme";
 
 /*
@@ -58,6 +59,7 @@ export default function ThemedButton({
 
   const handlePressIn = (e: GestureResponderEvent) => {
     setPressed(true);
+    if (!isDisabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPressIn?.(e);
   };
 

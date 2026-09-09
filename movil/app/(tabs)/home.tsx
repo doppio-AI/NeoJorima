@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Animated,
 } from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
 import { COLORS, SIZES } from "@/constants/theme";
 import ThemedText from "@/components/ThemedText";
@@ -20,6 +22,7 @@ import JorimaAvatar, { JorimaMood } from "@/components/JorimaAvatar";
 import AlertaRiesgoModal from "@/components/AlertaRiesgoModal";
 import RachaBienestar from "@/components/RachaBienestar";
 import CompaneroCrecimiento from "@/components/CompaneroCrecimiento";
+import { usePopAnimation } from "@/hooks/usePopAnimation";
 
 type Usuario = {
   id?: number;
@@ -78,6 +81,44 @@ function crearIdMensaje(): string {
   return `${Date.now()}-${Math.random()}`;
 }
 
+/*
+ * Micro-feedback (jorima-estilo-duolingo.md, bloque 8): la opción de
+ * ánimo hace "pop" al seleccionarse, con el mismo hook que usa
+ * JorimaAvatar — no una animación inventada aparte para esta pantalla.
+ */
+function MoodOptionButton({
+  label,
+  selected,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  const { escala, dispara } = usePopAnimation();
+
+  useEffect(() => {
+    if (selected) dispara();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
+
+  return (
+    <Animated.View style={{ flexGrow: 1, transform: [{ scale: escala }] }}>
+      <TouchableOpacity
+        style={[styles.moodOption, selected && styles.moodOptionSelected]}
+        onPress={onPress}
+        disabled={disabled}
+      >
+        <ThemedText variant="bodySmall" color={selected ? COLORS.white : COLORS.text} style={styles.moodLabel}>
+          {label}
+        </ThemedText>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
 export default function HomeScreen() {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
@@ -104,6 +145,7 @@ export default function HomeScreen() {
   const [sendingCarga, setSendingCarga] = useState(false);
   const [cargaAnswered, setCargaAnswered] = useState(false);
   const [checkingCarga, setCheckingCarga] = useState(true);
+  const { escala: escalaContador, dispara: disparaContador } = usePopAnimation();
 
   // ── Avatar ──
   const [avatarMood, setAvatarMood] = useState<JorimaMood>("sereno1");
@@ -294,6 +336,17 @@ export default function HomeScreen() {
     void checarCargaHoy();
   }, [usuario?.id, sessionToken]);
 
+  // "Pop" del contador de tareas al tocar +/- — nunca en el montaje inicial.
+  const primerRenderContador = useRef(true);
+  useEffect(() => {
+    if (primerRenderContador.current) {
+      primerRenderContador.current = false;
+      return;
+    }
+    disparaContador();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tareasPendientes]);
+
   const scrollToBottom = () => {
     setTimeout(() => {
       scrollRef.current?.scrollToEnd({ animated: true });
@@ -336,6 +389,7 @@ export default function HomeScreen() {
       // Se oculta el quiz una vez contestado, como pidió el flujo.
       setMoodAnswered(true);
       if (data.racha) setRacha(data.racha);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       setTimeout(() => setAvatarMood("sereno1"), 2500);
     } catch (error) {
@@ -378,6 +432,7 @@ export default function HomeScreen() {
 
       setIntencionTexto(texto);
       setIntencionAnswered(true);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       Alert.alert("Error", "No se pudo conectar con el servidor.");
     } finally {
@@ -414,6 +469,7 @@ export default function HomeScreen() {
       }
 
       setCargaAnswered(true);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       Alert.alert("Error", "No se pudo conectar con el servidor.");
     } finally {
@@ -627,29 +683,18 @@ export default function HomeScreen() {
             </ThemedText>
 
             <View style={styles.moodGrid}>
-              {MOOD_OPCIONES.map((item) => {
-                const selected = mood === item.value;
-
-                return (
-                  <TouchableOpacity
-                    key={item.value}
-                    style={[styles.moodOption, selected && styles.moodOptionSelected]}
-                    onPress={async () => {
-                      setMood(item.value);
-                      await saveMood(item.value);
-                    }}
-                    disabled={sendingMood}
-                  >
-                    <ThemedText
-                      variant="bodySmall"
-                      color={selected ? COLORS.white : COLORS.text}
-                      style={styles.moodLabel}
-                    >
-                      {item.label}
-                    </ThemedText>
-                  </TouchableOpacity>
-                );
-              })}
+              {MOOD_OPCIONES.map((item) => (
+                <MoodOptionButton
+                  key={item.value}
+                  label={item.label}
+                  selected={mood === item.value}
+                  disabled={sendingMood}
+                  onPress={async () => {
+                    setMood(item.value);
+                    await saveMood(item.value);
+                  }}
+                />
+              ))}
             </View>
 
             {sendingMood && (
@@ -709,9 +754,11 @@ export default function HomeScreen() {
                 <Feather name="minus" size={18} color={COLORS.primary} />
               </TouchableOpacity>
 
-              <ThemedText variant="h2" color={COLORS.primary}>
-                {tareasPendientes}
-              </ThemedText>
+              <Animated.View style={{ transform: [{ scale: escalaContador }] }}>
+                <ThemedText variant="h2" color={COLORS.primary}>
+                  {tareasPendientes}
+                </ThemedText>
+              </Animated.View>
 
               <TouchableOpacity
                 style={styles.stepperButton}

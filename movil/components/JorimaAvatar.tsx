@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Animated, Image, StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { COLORS } from "@/constants/theme";
+import { usePopAnimation } from "@/hooks/usePopAnimation";
 
 export type JorimaMood =
   | "sereno1"
@@ -32,7 +33,7 @@ export default function JorimaAvatar({
   size = 96,
 }: Props) {
   const [frame, setFrame] = useState<JorimaMood>(mood);
-  const escala = useRef(new Animated.Value(1)).current;
+  const { escala, dispara } = usePopAnimation();
 
   useEffect(() => {
     if (!talking) {
@@ -50,10 +51,8 @@ export default function JorimaAvatar({
   // "Pop" cada vez que cambia la expresión visible — hace que se sienta
   // viva en vez de solo cambiar de foto de golpe.
   useEffect(() => {
-    Animated.sequence([
-      Animated.timing(escala, { toValue: 1.14, duration: 150, useNativeDriver: true }),
-      Animated.spring(escala, { toValue: 1, useNativeDriver: true, friction: 4, tension: 60 }),
-    ]).start();
+    dispara();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frame]);
 
   const dimensiones = { width: size, height: size, borderRadius: size / 2 };
