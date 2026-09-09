@@ -17,6 +17,8 @@ import ThemedText from "@/components/ThemedText";
 import { API_URL } from "@/config/api";
 import JorimaAvatar, { JorimaMood } from "@/components/JorimaAvatar";
 import AlertaRiesgoModal from "@/components/AlertaRiesgoModal";
+import RachaBienestar from "@/components/RachaBienestar";
+import CompaneroCrecimiento from "@/components/CompaneroCrecimiento";
 
 type Usuario = {
   id?: number;
@@ -45,6 +47,15 @@ type ChatPostResponse = {
   nivel?: "alto" | "crisis";
   sentimiento?: "positivo" | "neutral" | "negativo";
 };
+
+type RachaInfo = {
+  racha_actual: number;
+  racha_raiz: number;
+  mejor_racha: number;
+  dias_totales: number;
+};
+
+const RACHA_VACIA: RachaInfo = { racha_actual: 0, racha_raiz: 0, mejor_racha: 0, dias_totales: 0 };
 
 const MENSAJE_BIENVENIDA: Message = {
   id: "bienvenida",
@@ -76,6 +87,9 @@ export default function HomeScreen() {
   const [sendingMood, setSendingMood] = useState(false);
   const [moodAnswered, setMoodAnswered] = useState(false);
   const [checkingMood, setCheckingMood] = useState(true);
+
+  // ── Racha de bienestar y compañero que crece contigo ──
+  const [racha, setRacha] = useState<RachaInfo>(RACHA_VACIA);
 
   // ── Intención del día ("Buenos días, Jorima") ──
   const [intencionInput, setIntencionInput] = useState("");
@@ -191,6 +205,7 @@ export default function HomeScreen() {
             setMood(data.estado);
           }
         }
+        if (res.ok && data.racha) setRacha(data.racha);
       } catch (error) {
         // Si falla la consulta, dejamos el quiz visible por si acaso;
         // no es crítico bloquear la pantalla por esto.
@@ -319,6 +334,7 @@ export default function HomeScreen() {
 
       // Se oculta el quiz una vez contestado, como pidió el flujo.
       setMoodAnswered(true);
+      if (data.racha) setRacha(data.racha);
 
       setTimeout(() => setAvatarMood("sereno1"), 2500);
     } catch (error) {
@@ -573,6 +589,16 @@ export default function HomeScreen() {
           <ThemedText variant="bodySmall" color={COLORS.textSecondary} style={{ marginTop: 8 }}>
             {avatarGenero === "masculino" ? "Jorimo" : "Jorima"}
           </ThemedText>
+
+          {racha.dias_totales > 0 && (
+            <View style={{ marginTop: 12 }}>
+              <CompaneroCrecimiento diasTotales={racha.dias_totales} />
+            </View>
+          )}
+
+          {racha.racha_actual > 0 && (
+            <RachaBienestar rachaActual={racha.racha_actual} rachaRaiz={racha.racha_raiz} />
+          )}
 
           <TouchableOpacity
             style={styles.relaxButton}

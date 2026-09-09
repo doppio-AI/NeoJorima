@@ -25,6 +25,7 @@ export type RachaSnapshot = {
   racha_actual: number;
   racha_raiz: number;
   mejor_racha: number;
+  dias_totales: number;
 };
 
 const MS_DIA = 1000 * 60 * 60 * 24;
@@ -41,16 +42,27 @@ function diasEntre(desde: Date, hasta: Date): number {
   );
 }
 
-function snapshot(r: {
-  racha_actual: number;
-  racha_raiz: number;
-  mejor_racha: number;
-}): RachaSnapshot {
+function snapshot(
+  r: { racha_actual: number; racha_raiz: number; mejor_racha: number },
+  dias_totales: number
+): RachaSnapshot {
   return {
     racha_actual: r.racha_actual,
     racha_raiz: r.racha_raiz,
     mejor_racha: r.mejor_racha,
+    dias_totales,
   };
+}
+
+/**
+ * Días totales (histórico, para siempre) en que la persona contestó
+ * el check-in de ánimo. A diferencia de la racha, nunca baja — es lo
+ * que alimenta al "compañero que crece contigo" (ver
+ * app/components/CompaneroCrecimiento.tsx): el compañero no se
+ * marchita por faltar un día, solo crece más despacio.
+ */
+async function contarDiasTotales(usuario_id: number): Promise<number> {
+  return prisma.estado_animo_diario.count({ where: { usuario_id } });
 }
 
 /**
@@ -79,14 +91,14 @@ export async function actualizarRacha(
         ultima_fecha: hoy,
       },
     });
-    return snapshot(creado);
+    return snapshot(creado, await contarDiasTotales(usuario_id));
   }
 
   const gap = existente.ultima_fecha ? diasEntre(existente.ultima_fecha, hoy) : null;
 
   // Ya se registró hoy (o el reloj se movió hacia atrás): no tocar nada.
   if (gap !== null && gap <= 0) {
-    return snapshot(existente);
+    return snapshot(existente, await contarDiasTotales(usuario_id));
   }
 
   const racha_actual =
@@ -107,7 +119,7 @@ export async function actualizarRacha(
     data: { racha_actual, racha_raiz, mejor_racha, ultima_fecha: hoy },
   });
 
-  return snapshot(actualizado);
+  return snapshot(actualizado, await contarDiasTotales(usuario_id));
 }
 
 /**
@@ -115,13 +127,14 @@ export async function actualizarRacha(
  * antes de que la persona conteste el check-in de hoy.
  */
 export async function obtenerRacha(usuario_id: number): Promise<RachaSnapshot> {
-  const existente = await prisma.racha_bienestar.findUnique({
-    where: { usuario_id },
-  });
+  const [existente, dias_totales] = await Promise.all([
+    prisma.racha_bienestar.findUnique({ where: { usuario_id } }),
+    contarDiasTotales(usuario_id),
+  ]);
 
   if (!existente) {
-    return { racha_actual: 0, racha_raiz: 0, mejor_racha: 0 };
+    return { racha_actual: 0, racha_raiz: 0, mejor_racha: 0, dias_totales };
   }
 
-  return snapshot(existente);
+  return snapshot(existente, dias_totales);
 }

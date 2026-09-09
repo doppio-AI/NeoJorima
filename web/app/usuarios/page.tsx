@@ -15,6 +15,7 @@ import JorimaAvatarWeb, { JorimaMood } from "@/app/components/JorimaAvatarWeb";
 import AlertaRiesgoModalWeb from "@/app/components/AlertaRiesgoModalWeb";
 import RachaBienestar from "@/app/components/RachaBienestar";
 import IntencionDelDia from "@/app/components/IntencionDelDia";
+import CompaneroCrecimiento from "@/app/components/CompaneroCrecimiento";
 import Sidebar from "@/app/components/sidebar";
 
 type Usuario = {
@@ -44,9 +45,10 @@ type RachaInfo = {
   racha_actual: number;
   racha_raiz: number;
   mejor_racha: number;
+  dias_totales: number;
 };
 
-const RACHA_VACIA: RachaInfo = { racha_actual: 0, racha_raiz: 0, mejor_racha: 0 };
+const RACHA_VACIA: RachaInfo = { racha_actual: 0, racha_raiz: 0, mejor_racha: 0, dias_totales: 0 };
 
 const MENSAJE_BIENVENIDA: Message = {
   id: "bienvenida",
@@ -507,8 +509,18 @@ export default function UsuariosPage() {
 
         {/* AVATAR */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0 20px" }}>
-          <JorimaAvatarWeb mood={avatarMood} talking={avatarTalking} size={200} />
-          <p style={{ marginTop: 8, color: "var(--neutral-500)", fontSize: 14 }}>Jorima</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <JorimaAvatarWeb mood={avatarMood} talking={avatarTalking} size={200} />
+              <p style={{ marginTop: 8, color: "var(--neutral-500)", fontSize: 14 }}>Jorima</p>
+            </div>
+
+            {racha.dias_totales > 0 && (
+              <div style={{ borderLeft: "1px solid var(--neutral-200)", paddingLeft: 28 }}>
+                <CompaneroCrecimiento diasTotales={racha.dias_totales} />
+              </div>
+            )}
+          </div>
 
           {(racha.racha_actual > 0 || (intencionAnswered && intencionTexto)) && (
             <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
