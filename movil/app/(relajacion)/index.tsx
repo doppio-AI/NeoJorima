@@ -13,6 +13,7 @@ import { Feather } from "@expo/vector-icons";
 import { COLORS, SIZES } from "@/constants/theme";
 import ThemedText from "@/components/ThemedText";
 import ThemedButton from "@/components/ThemedButton";
+import PressableCard from "@/components/PressableCard";
 import { obtenerCatalogoRelajacion, ActividadRelajacion } from "@/lib/relajacion";
 
 const RUTA_POR_PANTALLA: Record<string, string> = {
@@ -75,12 +76,7 @@ export default function RelajacionPickerScreen() {
         ) : (
           <View style={styles.grid}>
             {catalogo.map((actividad) => (
-              <TouchableOpacity
-                key={actividad.id}
-                style={styles.card}
-                onPress={() => irA(actividad)}
-                activeOpacity={0.85}
-              >
+              <PressableCard key={actividad.id} onPress={() => irA(actividad)} style={{ gap: 6, padding: 16 }}>
                 <Feather
                   name={ICONO_POR_TIPO[actividad.tipo] ?? "circle"}
                   size={24}
@@ -90,7 +86,7 @@ export default function RelajacionPickerScreen() {
                 <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
                   {actividad.descripcion}
                 </ThemedText>
-              </TouchableOpacity>
+              </PressableCard>
             ))}
           </View>
         )}
@@ -105,12 +101,4 @@ const styles = StyleSheet.create({
   header: { gap: 8 },
   backButton: { width: 36, height: 36, justifyContent: "center" },
   grid: { gap: 12 },
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: SIZES.radius,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 16,
-    gap: 6,
-  },
 });

@@ -236,7 +236,7 @@ export default function HistorialScreen() {
                     </View>
 
                     <View style={styles.cardInfo}>
-                      <ThemedText variant="body" style={styles.cardTitle}>
+                      <ThemedText variant="body">
                         {conv.titulo || "Conversación sin título"}
                       </ThemedText>
 
@@ -346,19 +346,23 @@ const styles = StyleSheet.create({
 
   introCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: SIZES.radiusLg,
     padding: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: COLORS.border,
+    borderBottomWidth: 4,
+    borderBottomColor: COLORS.borderStrong,
     gap: 6,
   },
 
   stateCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: SIZES.radiusLg,
     padding: 24,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: COLORS.border,
+    borderBottomWidth: 4,
+    borderBottomColor: COLORS.borderStrong,
     alignItems: "center",
     justifyContent: "center",
     gap: 14,
@@ -371,9 +375,11 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: SIZES.radiusLg,
+    borderWidth: 2,
     borderColor: COLORS.border,
+    borderBottomWidth: 4,
+    borderBottomColor: COLORS.borderStrong,
     padding: 14,
   },
 
@@ -409,10 +415,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
 
-  cardTitle: {
-    fontWeight: "600",
-  },
-
   messagesContainer: {
     marginTop: 14,
     paddingTop: 14,
@@ -435,7 +437,7 @@ const styles = StyleSheet.create({
 
   messageBubble: {
     maxWidth: "88%",
-    borderRadius: 16,
+    borderRadius: 20,
     paddingVertical: 10,
     paddingHorizontal: 12,
     flexDirection: "row",
@@ -444,10 +446,14 @@ const styles = StyleSheet.create({
 
   assistantBubble: {
     backgroundColor: COLORS.background,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    borderBottomLeftRadius: 6,
   },
 
   userBubble: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.secondary,
+    borderBottomRightRadius: 6,
   },
 
   messageIcon: {

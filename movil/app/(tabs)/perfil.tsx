@@ -171,10 +171,12 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: SIZES.radiusLg,
     padding: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: COLORS.border,
+    borderBottomWidth: 4,
+    borderBottomColor: COLORS.borderStrong,
     alignItems: "center",
     gap: 8,
   },

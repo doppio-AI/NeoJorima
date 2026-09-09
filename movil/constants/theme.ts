@@ -9,7 +9,8 @@ export const COLORS = {
 
 export const SIZES = {
   padding: Spacing.md,
-  radius: Radius.md,
+  radius: Radius.md, // botones e inputs
+  radiusLg: Radius.lg, // tarjetas
   base: Spacing.sm,
   small: Spacing.sm,
   medium: Spacing.md,

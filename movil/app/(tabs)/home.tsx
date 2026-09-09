@@ -14,6 +14,7 @@ import { Feather } from "@expo/vector-icons";
 
 import { COLORS, SIZES } from "@/constants/theme";
 import ThemedText from "@/components/ThemedText";
+import ThemedButton from "@/components/ThemedButton";
 import { API_URL } from "@/config/api";
 import JorimaAvatar, { JorimaMood } from "@/components/JorimaAvatar";
 import AlertaRiesgoModal from "@/components/AlertaRiesgoModal";
@@ -681,18 +682,12 @@ export default function HomeScreen() {
               onSubmitEditing={() => void saveIntencion()}
             />
 
-            <TouchableOpacity
-              style={[
-                styles.submitCargaButton,
-                (!intencionInput.trim() || sendingIntencion) && styles.sendButtonDisabled,
-              ]}
+            <ThemedButton
+              title="Listo"
+              loading={sendingIntencion}
+              disabled={!intencionInput.trim()}
               onPress={() => void saveIntencion()}
-              disabled={sendingIntencion || !intencionInput.trim()}
-            >
-              <ThemedText variant="bodySmall" color={COLORS.white}>
-                {sendingIntencion ? "Guardando..." : "Listo"}
-              </ThemedText>
-            </TouchableOpacity>
+            />
           </View>
         )}
 
@@ -727,15 +722,11 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={[styles.submitCargaButton, sendingCarga && styles.sendButtonDisabled]}
+            <ThemedButton
+              title="Confirmar"
+              loading={sendingCarga}
               onPress={() => void saveCarga()}
-              disabled={sendingCarga}
-            >
-              <ThemedText variant="bodySmall" color={COLORS.white}>
-                {sendingCarga ? "Guardando..." : "Confirmar"}
-              </ThemedText>
-            </TouchableOpacity>
+            />
           </View>
         )}
 
@@ -880,9 +871,11 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: SIZES.radius,
-    borderWidth: 1,
+    borderRadius: SIZES.radiusLg,
+    borderWidth: 2,
     borderColor: COLORS.border,
+    borderBottomWidth: 4,
+    borderBottomColor: COLORS.borderStrong,
     padding: 16,
     gap: 12,
   },
@@ -914,19 +907,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: COLORS.border,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: COLORS.white,
   },
-  submitCargaButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: SIZES.radius,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-
   chatHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -946,19 +932,21 @@ const styles = StyleSheet.create({
   chatMessages: { gap: 10 },
   messageBubble: {
     maxWidth: "82%",
-    borderRadius: SIZES.radius,
+    borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   assistantMessage: {
     alignSelf: "flex-start",
     backgroundColor: COLORS.background,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: COLORS.border,
+    borderBottomLeftRadius: 6,
   },
   userMessage: {
     alignSelf: "flex-end",
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.secondary,
+    borderBottomRightRadius: 6,
   },
 
   chatInputRow: { flexDirection: "row", gap: 10, alignItems: "flex-end" },

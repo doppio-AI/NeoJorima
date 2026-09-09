@@ -10,9 +10,12 @@ export const styles = StyleSheet.create({
 
   card: {
     backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    borderBottomWidth: 4,
+    borderBottomColor: COLORS.borderStrong,
     borderRadius: SIZES.radius,
     padding: 20,
-    elevation: 3,
   },
 
   title: {

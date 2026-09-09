@@ -4,12 +4,12 @@ import {
   StyleSheet,
   View,
   ScrollView,
-  TouchableOpacity,
 } from "react-native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { COLORS, SIZES } from "@/constants/theme";
 import ThemedText from "@/components/ThemedText";
+import PressableCard from "@/components/PressableCard";
 
 type Recurso = {
   id: number;
@@ -122,12 +122,7 @@ export default function RecursosScreen() {
         </View>
 
         {recursos.map((recurso) => (
-          <TouchableOpacity
-            key={recurso.id}
-            activeOpacity={0.85}
-            style={styles.card}
-            onPress={() => {}}
-          >
+          <PressableCard key={recurso.id} onPress={() => {}} style={{ gap: 12 }}>
             <View style={styles.cardTop}>
               <View style={styles.iconCircle}>
                 <MaterialCommunityIcons
@@ -138,9 +133,7 @@ export default function RecursosScreen() {
               </View>
 
               <View style={styles.cardContent}>
-                <ThemedText variant="body" style={styles.cardTitle}>
-                  {recurso.titulo}
-                </ThemedText>
+                <ThemedText variant="body">{recurso.titulo}</ThemedText>
 
                 <ThemedText variant="caption" color={COLORS.secondary}>
                   {recurso.categoria}
@@ -153,7 +146,7 @@ export default function RecursosScreen() {
             <ThemedText variant="bodySmall" color={COLORS.textSecondary}>
               {recurso.descripcion}
             </ThemedText>
-          </TouchableOpacity>
+          </PressableCard>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -178,10 +171,12 @@ const styles = StyleSheet.create({
 
   introCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: SIZES.radiusLg,
     padding: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: COLORS.border,
+    borderBottomWidth: 4,
+    borderBottomColor: COLORS.borderStrong,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
@@ -212,21 +207,12 @@ const styles = StyleSheet.create({
   },
 
   categoryChip: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: "rgba(15, 76, 129, 0.1)",
+    borderWidth: 2,
+    borderColor: COLORS.primary,
     borderRadius: 999,
     paddingVertical: 8,
     paddingHorizontal: 12,
-  },
-
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    gap: 12,
   },
 
   cardTop: {
@@ -247,9 +233,5 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
     gap: 2,
-  },
-
-  cardTitle: {
-    fontWeight: "600",
   },
 });
