@@ -20,6 +20,7 @@ const RUTA_POR_PANTALLA: Record<string, string> = {
   RelajacionEstiramiento: "/(relajacion)/estiramiento",
   RelajacionBurbujas: "/(relajacion)/burbujas",
   RelajacionMemorama: "/(relajacion)/memorama",
+  RelajacionCapsula: "/(relajacion)/capsula",
 };
 
 const ICONO_POR_TIPO: Record<string, keyof typeof Feather.glyphMap> = {
@@ -27,6 +28,7 @@ const ICONO_POR_TIPO: Record<string, keyof typeof Feather.glyphMap> = {
   estiramiento: "activity",
   asmr: "circle",
   juego: "grid",
+  capsula: "feather",
 };
 
 export default function RelajacionPickerScreen() {

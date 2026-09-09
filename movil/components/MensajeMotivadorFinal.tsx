@@ -18,7 +18,7 @@ const MENSAJES_GENERICOS = [
 ];
 
 interface Props {
-  tipo: "respiracion" | "estiramiento" | "juego" | "asmr";
+  tipo: "respiracion" | "estiramiento" | "juego" | "asmr" | "capsula";
   duracionSeg: number;
   completada?: boolean;
 }

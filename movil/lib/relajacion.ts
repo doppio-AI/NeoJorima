@@ -2,11 +2,18 @@ import { authFetch } from "@/lib/api";
 
 export type ActividadRelajacion = {
   id: string;
-  tipo: "respiracion" | "estiramiento" | "juego" | "asmr";
+  tipo: "respiracion" | "estiramiento" | "juego" | "asmr" | "capsula";
   titulo: string;
   descripcion: string;
   duracion_seg: number;
   pantalla: string;
+};
+
+export type Capsula = {
+  id: string;
+  titulo: string;
+  texto: string;
+  duracion_seg: number;
 };
 
 /* ── GET /api/relajacion/catalogo ──
@@ -37,6 +44,18 @@ export async function registrarSesionRelajacion(params: {
     });
   } catch {
     // silencioso a propósito
+  }
+}
+
+/* ── GET /api/capsula/hoy ──
+   La cápsula de contenido del día, elegida por categoría. */
+export async function obtenerCapsulaDeHoy(): Promise<Capsula | null> {
+  try {
+    const res = await authFetch("/api/capsula/hoy");
+    const data = await res.json();
+    return data?.capsula ?? null;
+  } catch {
+    return null;
   }
 }
 

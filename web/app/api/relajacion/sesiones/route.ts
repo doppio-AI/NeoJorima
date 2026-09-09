@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth/session";
 
-const TIPOS_VALIDOS = ["respiracion", "estiramiento", "juego", "asmr"];
+const TIPOS_VALIDOS = ["respiracion", "estiramiento", "juego", "asmr", "capsula"];
 
 /* ───────────────────────────────────────────
    POST /api/relajacion/sesiones

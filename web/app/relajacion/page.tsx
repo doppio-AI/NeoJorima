@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FiWind, FiActivity, FiCircle, FiGrid, FiArrowLeft } from "react-icons/fi";
+import { FiWind, FiActivity, FiCircle, FiGrid, FiArrowLeft, FiFeather } from "react-icons/fi";
 
 type Actividad = {
   id: string;
@@ -17,6 +17,7 @@ const RUTA_POR_PANTALLA: Record<string, string> = {
   RelajacionEstiramiento: "/relajacion/estiramiento",
   RelajacionBurbujas: "/relajacion/burbujas",
   RelajacionMemorama: "/relajacion/memorama",
+  RelajacionCapsula: "/relajacion/capsula",
 };
 
 const ICONO_POR_TIPO: Record<string, React.ReactNode> = {
@@ -24,6 +25,7 @@ const ICONO_POR_TIPO: Record<string, React.ReactNode> = {
   estiramiento: <FiActivity size={22} />,
   asmr: <FiCircle size={22} />,
   juego: <FiGrid size={22} />,
+  capsula: <FiFeather size={22} />,
 };
 
 function readCookie(name: string): string | null {

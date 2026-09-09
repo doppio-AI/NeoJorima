@@ -41,6 +41,14 @@ const CATALOGO = [
     duracion_seg: 90,
     pantalla: "RelajacionMemorama",
   },
+  {
+    id: "capsula-del-dia",
+    tipo: "capsula",
+    titulo: "Cápsula de 90 segundos",
+    descripcion: "Un solo contenido corto, elegido para ti según lo que has compartido con Jorima.",
+    duracion_seg: 90,
+    pantalla: "RelajacionCapsula",
+  },
 ] as const;
 
 export async function GET() {

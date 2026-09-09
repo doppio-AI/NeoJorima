@@ -8,6 +8,7 @@ export default function RelajacionLayout() {
       <Stack.Screen name="estiramiento" />
       <Stack.Screen name="burbujas" />
       <Stack.Screen name="memorama" />
+      <Stack.Screen name="capsula" />
     </Stack>
   );
 }
