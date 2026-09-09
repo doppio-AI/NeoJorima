@@ -69,3 +69,13 @@ Registro por bloque, según `jorima-estilo-duolingo.md`. Una línea (o unas cuan
 - `movil/app/(tabs)/perfil.tsx`: nuevo botón "Vitrina de diseño (dev)" (variante `lavanda`), visible solo si `__DEV__`, que navega a `/design-system`.
 
 **Verificado:** por tipos (`tsc` limpio, mismos 3 errores preexistentes de siempre) y lectura de código — no hay emulador en este entorno para capturarla en vivo, pero la pantalla no depende de red ni de sesión, así que un `expo start` debería mostrarla completa de inmediato.
+
+---
+
+## Bloque 6 — Tab bar y navegación (solo móvil)
+
+**Qué cambió:**
+- `movil/app/(tabs)/_layout.tsx` reescrito: la pestaña activa dibuja una pastilla de fondo (`secondary` al 12%) con el ícono relleno; la inactiva no tiene fondo y el ícono va en su versión outline — la diferencia no depende solo del color, hay forma (requisito de accesibilidad del propio bloque). Los 4 íconos migraron de Feather/MaterialCommunityIcons mixtos a solo `MaterialCommunityIcons`, que sí tiene par outline/relleno para los cuatro (`home`, `clock`, `book-open`, `account`). La etiqueta se dibuja adentro de la pastilla junto al ícono, solo en la pestaña activa (`tabBarShowLabel: false` a nivel global) — así se resuelve de paso "esconder la etiqueta si el espacio aprieta" sin lógica extra. Barra a 76px de alto, borde superior de 2px, sin sombra.
+- `movil/components/haptic-tab.tsx`: existía sin usarse desde el scaffold original de Expo. Se activó como `tabBarButton` y se cambió de `impactAsync` (solo iOS) a `Haptics.selectionAsync()` en ambas plataformas — es el tipo de háptico pensado para elegir entre opciones del mismo grupo, que es exactamente lo que es un tab bar.
+
+**Verificado:** `tsc` limpio (mismos 3 errores preexistentes, ninguno nuevo). Sin emulador/dispositivo físico en este entorno para confirmar el háptico o ver la pastilla en vivo — revisado por lectura de código contra la documentación de Expo Router (`tabBarIcon` recibe `focused`, `tabBarButton` acepta un componente).
