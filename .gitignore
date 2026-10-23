@@ -38,3 +38,126 @@ wearable/android/local.properties
 # PDFs de contexto del proyecto (documentos de trabajo, no código)
 Contexto del proyecto*.pdf
 Pr*cticas aplicadas*.pdf
+
+# ═══════════════════════════════════════════════════════════════
+# ENTRADAS INNECESARIAS (añadidas a petición del usuario)
+#
+# Nada de esta lista hace falta para que Jorima compile o funcione:
+# son patrones de sistemas, editores y lenguajes que este proyecto no
+# usa, y otros que ya cubren los .gitignore de web/, movil/ y wearable/.
+# Se dejan aquí por si algún día se agregan esos archivos.
+#
+# A propósito NO se incluyeron patrones que podrían ocultar código o
+# recursos de verdad: *.dart, *.ts, *.tsx, *.json, *.yaml, *.lock,
+# *.kts, *.sql, *.prisma, *.png, *.pdf, *.md ni *.jar (el wrapper de
+# Gradle y los package-lock/pubspec.lock se necesitan).
+# ═══════════════════════════════════════════════════════════════
+
+# Basura de sistemas operativos que aquí no se usan
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+._*
+.DS_Store?
+.Spotlight-V100
+.Trashes
+.fseventsd
+.AppleDouble
+.LSOverride
+Icon?
+
+# Editores e IDEs (el repo usa VS Code; esto sobra)
+.idea/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+*~
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.history/
+
+# Temporales, respaldos y descargas a medias
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.old
+*.save
+*.part
+*.crdownload
+*.lock.bak
+
+# Lenguajes y herramientas que Jorima no usa
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+.envrc
+target/
+*.class
+*.o
+*.a
+*.dylib
+*.exe
+*.dll
+*.pdb
+*.obj
+*.gch
+*.pch
+*.elc
+.cask
+.Rproj.user
+*.Rproj
+*.Rhistory
+*.stackdump
+
+# Ecosistema Node que ya cubre el .gitignore de cada subproyecto
+.pnpm-store/
+.yarn/
+.eslintcache
+.stylelintcache
+.parcel-cache/
+.turbo/
+coverage/
+.nyc_output/
+.vercel/
+*.tsbuildinfo
+
+# Flutter/Dart redundantes: cada subproyecto ya tiene su propio ignore
+.pub-cache/
+.pub/
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Paquetes y volcados de disco
+*.tgz
+*.tar.gz
+*.tar
+*.rar
+*.7z
+*.iso
+*.dmg
+*.msi
+*.deb
+*.rpm
+*.AppImage
+
+# Varios que sobran
+.sonar/
+.scannerwork/
+*.pid
+*.pid.lock
+*.seed
+.cache/
+.tmp/
