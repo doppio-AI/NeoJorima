@@ -1,4 +1,4 @@
-const LOCAL_IP = "10.155.204.186";
+const LOCAL_IP = "10.13.27.95";
 const VERCEL_URL = "https://jorima-eight.vercel.app";
 
 /*
