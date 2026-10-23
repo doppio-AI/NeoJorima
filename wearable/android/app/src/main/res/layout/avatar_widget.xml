@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Widget del avatar de Jorima.
+  Sólo se usan vistas compatibles con RemoteViews (LinearLayout, ImageView,
+  TextView): cualquier otra clase no se puede inflar desde un widget.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_avatar_raiz"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="6dp"
+    android:background="@drawable/fondo_widget_avatar">
+
+    <ImageView
+        android:id="@+id/widget_avatar_imagen"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/widget_avatar_descripcion"
+        android:src="@drawable/avatar_jorima" />
+
+    <TextView
+        android:id="@+id/widget_avatar_texto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="@string/widget_avatar_titulo"
+        android:textColor="#FFFFFF"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:maxLines="1" />
+
+</LinearLayout>

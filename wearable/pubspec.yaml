@@ -1,0 +1,67 @@
+name: jorima_wearable
+description: "Jorima Wearable: extensión de Jorima para smartwatch (RF-01 chat, RF-02 racha, RF-03 rutinas y widget del avatar)."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Red: cliente HTTP hacia la API de Jorima
+  http: ^1.6.0
+
+  # Seguridad: el token vive en el Keystore de Android, no en preferencias
+  flutter_secure_storage: ^11.2.0
+
+  # Cifrado en reposo de los mensajes guardados en el reloj
+  encrypt: ^5.0.3
+
+  # Estado
+  provider: ^6.1.5+1
+
+  # Datos locales y cola de sincronización
+  sqflite: ^2.4.5
+  path: ^1.9.1
+
+  # RF-03: avisos locales programados
+  flutter_local_notifications: ^22.3.2
+  timezone: ^0.11.2
+  flutter_timezone: ^5.1.1
+
+  # Detección de red (offline-first)
+  connectivity_plus: ^7.3.2
+
+  # Dictado por voz del chat (RF-01)
+  speech_to_text: ^7.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/jorima/
+
+  # Nunito, la tipografía de Jorima (pesos 400 a 800, como en globals.css).
+  # Son los mismos archivos del paquete @expo-google-fonts/nunito que ya usa la
+  # app móvil, no una fuente distinta.
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Nunito-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Nunito-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Nunito-ExtraBold.ttf
+          weight: 800

@@ -1,0 +1,83 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ── Permisos ──────────────────────────────────────────────
+         INTERNET: hablar con la API de Jorima (HTTPS).
+         POST_NOTIFICATIONS: RF-03. Obligatorio desde Android 13 (API 33);
+           se pide en tiempo de ejecución la primera vez que se activan las
+           rutinas (ver ServicioNotificaciones.pedirPermiso).
+         RECORD_AUDIO: dictado por voz del chat (RF-01).
+         VIBRATE: el aviso corto con vibración de RF-03.
+         WAKE_LOCK: que el aviso programado se entregue con el reloj dormido.
+    -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
+    <!-- ── Wear OS ──────────────────────────────────────────────
+         `required="false"` en las features de reloj para que el APK también
+         se pueda instalar en un teléfono durante las pruebas.
+    -->
+    <uses-feature android:name="android.hardware.type.watch" android:required="false"/>
+    <uses-feature android:name="android.hardware.microphone" android:required="false"/>
+
+    <application
+        android:label="Jorima"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <!-- ── Widget del avatar (segundo parcial) ─────────────────
+             El widget del reloj muestra el avatar de Jorima y, al tocarlo,
+             abre la app. Ver AvatarWidgetProvider.kt.
+        -->
+        <receiver
+            android:name=".AvatarWidgetProvider"
+            android:exported="true"
+            android:label="Jorima">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/avatar_widget_info" />
+        </receiver>
+
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Android 11+ exige declarar el intent del reconocedor de voz para
+             que speech_to_text pueda encontrarlo (dictado del chat). -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+</manifest>
