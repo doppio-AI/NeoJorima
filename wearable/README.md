@@ -83,6 +83,7 @@ destino es Wear OS.
 | `flutter build apk --debug` | **app-debug.apk** construido |
 | `flutter build apk --release` | **app-release.apk (53.1 MB)** construido |
 | Layout a 220 × 220 px y a 300 × 300 px | sin desbordamientos |
+| Instalada en emulador Wear OS 4 | abre y llama a la API real (ver 2.2) |
 
 La compilación del APK es lo que valida de verdad el lado nativo: el
 `AndroidManifest` con sus permisos, el `AvatarWidgetProvider` en Kotlin, el
@@ -118,6 +119,60 @@ eso el título y el botón de regreso quedan dentro del círculo en lugar de
 quedar cortados por la curva del reloj. Las pantallas con mucho contenido se
 desplazan, y los bloques que en un reloj pequeño no caben se encogen con
 `FittedBox` en vez de desbordarse.
+
+## 2.2. Probada en un emulador de Wear OS
+
+Además del render, la app se instaló y se ejecutó en un reloj virtual real:
+
+| | |
+|---|---|
+| AVD | `jorima_wear` · perfil `wearos_large_round` |
+| Imagen | `system-images;android-33;android-wear;x86_64` (Wear OS 4) |
+| Pantalla | 454 × 454 px, 320 dpi (≈ 227 dp), `ro.build.characteristics = watch` |
+
+![Acceso](docs/capturas/emulador-01-login.png)
+![Error real de la API](docs/capturas/emulador-04-error-api.png)
+
+La segunda captura es la prueba de que hay conexión de verdad: al pulsar
+"Entrar" sin datos, el reloj muestra **"Correo y contraseña son obligatorios"**,
+que es el mensaje textual que devuelve `web/app/api/login/mobile/route.ts`.
+Eso valida el camino completo emulador → HTTPS → API de Jorima → manejo de
+errores.
+
+### Cómo levantarlo
+
+```powershell
+$sdk = "$env:LOCALAPPDATA\Android\Sdk"
+
+# 1. Imagen de sistema (una sola vez, ~1.5 GB)
+& "$sdk\cmdline-tools\latest\bin\sdkmanager.bat" "system-images;android-33;android-wear;x86_64"
+
+# 2. Reloj virtual redondo (una sola vez)
+& "$sdk\cmdline-tools\latest\bin\avdmanager.bat" create avd `
+    -n jorima_wear -k "system-images;android-33;android-wear;x86_64" -d wearos_large_round
+
+# 3. Arrancarlo
+& "$sdk\emulator\emulator.exe" -avd jorima_wear -gpu swiftshader_indirect
+
+# 4. Instalar y correr con recarga en caliente
+cd wearable
+flutter run -d emulator-5554
+```
+
+> **Nota sobre la GPU:** con el render por hardware (`-gpu auto`) el emulador
+> se cerraba al arrancar y dejaba un volcado en
+> `%TEMP%\AndroidEmulator\emu-crash-*`. Con `-gpu swiftshader_indirect`
+> (render por software) arranca estable; es más lento, pero suficiente para
+> probar la app.
+
+### Detalle que hubo que corregir al probarla
+
+En Wear OS el teclado es de **pantalla completa**: al abrir el acceso, el
+primer campo tomaba el foco y el teclado tapaba toda la interfaz. Ahora los
+campos empiezan en solo lectura y se activan al tocarlos
+(`CampoReloj.soloLectura`), así la pantalla se ve antes de escribir. No lo
+detectó ninguna prueba automática: apareció al ejecutarla de verdad, que es
+justamente para lo que sirve el emulador.
 
 ---
 
@@ -274,12 +329,10 @@ Nada de esto se rellenó con datos inventados:
    `estiramiento`, `juego`, `asmr` y `capsula`. El recordatorio de agua funciona
    como aviso **local** y no registra sesión, para no mandar un valor que el
    servidor rechazaría con un 400.
-2. **No se probó en un reloj físico ni en un emulador de Wear OS.** Está
-   verificado con `flutter analyze`, 39 pruebas (incluido el layout a tamaño de
-   reloj), la compilación de los APK de debug y release, y capturas renderizadas
-   del mismo árbol de widgets. Lo que falta es la prueba en el dispositivo: las
-   capturas de `flutter doctor` y del emulador corriendo la app, que no se
-   simulan.
+2. **No se probó en un reloj físico.** Sí se instaló y ejecutó en un emulador de
+   Wear OS 4 (Android 13), donde se verificó el arranque, el layout redondo y una
+   llamada real a la API (ver 2.2). Lo que falta es el dispositivo físico y las
+   capturas de `flutter doctor` del entorno, que no se simulan.
 3. **El certificado no está "pinned".** Se habla siempre por HTTPS, pero no se
    implementó *certificate pinning*: requiere el certificado del servidor y, sin
    poder probarlo en el dispositivo, no se deja código que parezca cumplirlo sin

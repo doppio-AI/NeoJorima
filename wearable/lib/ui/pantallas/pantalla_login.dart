@@ -24,13 +24,36 @@ class PantallaLogin extends StatefulWidget {
 class _PantallaLoginState extends State<PantallaLogin> {
   final TextEditingController _correo = TextEditingController();
   final TextEditingController _contrasena = TextEditingController();
+  final FocusNode _focoCorreo = FocusNode();
+  final FocusNode _focoContrasena = FocusNode();
   bool _verContrasena = false;
+
+  /// Campo que la persona está editando, o `null` si ninguno.
+  ///
+  /// Mientras es `null` los dos campos están en solo lectura y el teclado de
+  /// Wear (que ocupa la pantalla entera) no aparece. Así el acceso se ve y se
+  /// entiende antes de tocar nada.
+  String? _campoActivo;
 
   @override
   void dispose() {
     _correo.dispose();
     _contrasena.dispose();
+    _focoCorreo.dispose();
+    _focoContrasena.dispose();
     super.dispose();
+  }
+
+  /// Activa un campo y le da el foco después del siguiente fotograma, cuando ya
+  /// dejó de ser de solo lectura.
+  void _activar(String campo) {
+    if (_campoActivo == campo) return;
+    setState(() => _campoActivo = campo);
+
+    final foco = campo == 'correo' ? _focoCorreo : _focoContrasena;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) foco.requestFocus();
+    });
   }
 
   Future<void> _entrar() async {
@@ -85,6 +108,10 @@ class _PantallaLoginState extends State<PantallaLogin> {
             etiqueta: 'Correo',
             tipoTeclado: TextInputType.emailAddress,
             accion: TextInputAction.next,
+            foco: _focoCorreo,
+            soloLectura: _campoActivo != 'correo',
+            alTocar: () => _activar('correo'),
+            alEnviar: () => _activar('contrasena'),
           ),
           const SizedBox(height: 6),
           CampoReloj(
@@ -93,6 +120,9 @@ class _PantallaLoginState extends State<PantallaLogin> {
             oscuro: !_verContrasena,
             accion: TextInputAction.done,
             alEnviar: _entrar,
+            foco: _focoContrasena,
+            soloLectura: _campoActivo != 'contrasena',
+            alTocar: () => _activar('contrasena'),
             sufijo: IconButton(
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
@@ -140,6 +170,9 @@ class CampoReloj extends StatelessWidget {
     this.sufijo,
     this.maxLineas = 1,
     this.habilitado = true,
+    this.soloLectura = false,
+    this.alTocar,
+    this.foco,
   });
 
   final TextEditingController controlador;
@@ -151,6 +184,16 @@ class CampoReloj extends StatelessWidget {
   final Widget? sufijo;
   final int maxLineas;
   final bool habilitado;
+
+  /// Cuando es true el campo no abre el teclado.
+  ///
+  /// En Wear OS el teclado es **de pantalla completa**: si un campo toma el foco
+  /// al abrir la pantalla, tapa toda la interfaz. Por eso los campos del acceso
+  /// empiezan en solo lectura y se activan cuando la persona los toca.
+  final bool soloLectura;
+
+  final VoidCallback? alTocar;
+  final FocusNode? foco;
 
   @override
   Widget build(BuildContext context) {
@@ -168,8 +211,11 @@ class CampoReloj extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controlador,
+              focusNode: foco,
               obscureText: oscuro,
               enabled: habilitado,
+              readOnly: soloLectura,
+              onTap: alTocar,
               keyboardType: tipoTeclado,
               textInputAction: accion,
               onSubmitted: alEnviar == null ? null : (_) => alEnviar!(),

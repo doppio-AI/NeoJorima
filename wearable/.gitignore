@@ -46,3 +46,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Log del emulador cuando se lanza con redireccion
+emulador.log*
